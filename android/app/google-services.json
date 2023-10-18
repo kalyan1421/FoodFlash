@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "700654521573",
+    "project_id": "ubereats-77b54",
+    "storage_bucket": "ubereats-77b54.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700654521573:android:0875e94cd13e9f12f8980c",
+        "android_client_info": {
+          "package_name": "com.example.uber_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPI-nYdr0n26NXxLxw8x0Ktg6t4NyUO2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700654521573:android:c15877ca3e120ad5f8980c",
+        "android_client_info": {
+          "package_name": "com.kalyan.ubereats"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPI-nYdr0n26NXxLxw8x0Ktg6t4NyUO2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
