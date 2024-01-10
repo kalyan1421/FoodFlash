@@ -14,6 +14,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import "package:intl/intl.dart";
 import 'dart:async';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:location/location.dart' as location;
 
 class Order_tracking extends StatefulWidget {
   const Order_tracking({super.key});
@@ -23,7 +25,7 @@ class Order_tracking extends StatefulWidget {
 }
 
 class _OrderTrackingState extends State<Order_tracking> {
-   late Timer _animationTimer;
+  late Timer _animationTimer = Timer(Duration.zero, () {});
   String locationInfo = 'Loading...';
   List<Map<String, dynamic>> orderItems = [];
   double totalAmount = 0.0;
@@ -45,6 +47,13 @@ class _OrderTrackingState extends State<Order_tracking> {
   bool _isDeliveryCompleted = false;
   bool _isTrafficEnabled = false;
 
+  late Polyline _polyline;
+  location.Location _location = location.Location();
+
+  late LatLng bikePosition;
+  final Duration _animationDuration =
+      const Duration(milliseconds: 1000); // Adjust the duration as needed
+
   void _toggleMapType() {
     setState(() {
       _currentMapType = _currentMapType == MapType.normal
@@ -65,242 +74,120 @@ class _OrderTrackingState extends State<Order_tracking> {
     super.dispose();
   }
 
-  void _startAnimation() {
-    const int updateInterval = 100;
-    const double animationSpeed = 0.1;
-    int elapsedTime = 0;
-
-    _animationTimer =
-        Timer.periodic(Duration(milliseconds: updateInterval), (timer) {
-      elapsedTime += updateInterval;
-
-      if (elapsedTime <=
-          Geolocator.distanceBetween(
-                _userLocation.latitude,
-                _userLocation.longitude,
-                _deliveryLocation.latitude,
-                _deliveryLocation.longitude,
-              ) /
-              animationSpeed) {
-        double fraction = elapsedTime /
-            (Geolocator.distanceBetween(
-                  _userLocation.latitude,
-                  _userLocation.longitude,
-                  _deliveryLocation.latitude,
-                  _deliveryLocation.longitude,
-                ) /
-                animationSpeed);
-
-        _updatePolyline(fraction);
-        _updateIconMarker(fraction);
-      } else {
-        timer.cancel();
-        _onAnimationComplete();
-      }
-    });
-  }
-
-  void _onAnimationComplete() {
-    setState(() {
-      _isDeliveryCompleted = true;
-    });
-    showCustomSnackBar(
-        context, "Your food delivery has been successfully completed.");
-  }
-
-  Future<void> _getLocationInfo() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (!mounted) return;
-      if (placemarks.isNotEmpty) {
-        Placemark placemark = placemarks[0];
-        String address =
-            '${placemark.subLocality}, ${placemark.locality}, ${placemark.administrativeArea}';
-        setState(() {
-          locationInfo = address;
-        });
-
-        _userLocation = LatLng(position.latitude, position.longitude);
-
-        _initializeGoogleMap(_userLocation);
-
-        double nearbyLatitude = position.latitude + 0.009;
-        double nearbyLongitude = position.longitude + 0.009;
-        _getNearbyLocationInfo(nearbyLatitude, nearbyLongitude);
-
-        _deliveryLocation = LatLng(nearbyLatitude, nearbyLongitude);
-
-        _drawPolyline(_userLocation, _deliveryLocation);
-
-        _startAnimation();
-      } else {
-        setState(() {
-          locationInfo = 'Address not found';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        locationInfo = 'Error fetching location data: \n$e';
-      });
-    }
-  }
-
-  void _initializeGoogleMap(LatLng initialLocation) {
-    setState(() {
-      _markers.clear();
-      _markers.add(
-        Marker(
-          markerId: MarkerId('userLocation'),
-          position: initialLocation,
-          infoWindow: InfoWindow(title: 'Your Location'),
-        ),
-      );
-
-      _controller?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: initialLocation,
-            zoom: 14.0,
-          ),
-        ),
-      );
-    });
-  }
-
-  void _getNearbyLocationInfo(double latitude, double longitude) async {
-    try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
-      );
-
-      if (!mounted) return;
-      if (placemarks.isNotEmpty) {
-        Placemark placemark = placemarks[0];
-        String address = '${placemark.subLocality}';
-        setState(() {
-          nearbyLocationInfo = address;
-        });
-
-        _markers.add(
-          Marker(
-            markerId: MarkerId('nearbyLocation'),
-            position: LatLng(latitude, longitude),
-            infoWindow: InfoWindow(title: 'Nearby Location'),
-          ),
-        );
-      } else {
-        setState(() {
-          nearbyLocationInfo = 'Address not found';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        nearbyLocationInfo = 'Error fetching nearby location data: \n$e';
-      });
-    }
-  }
-
-  Future<void> _loadBikeIcon() async {
-    final ByteData data = await rootBundle.load('assets/Delivery_bike.png');
-    final Uint8List bytes = data.buffer.asUint8List();
-
-    _bikeIcon = BitmapDescriptor.fromBytes(bytes);
-  }
-
-  void _drawPolyline(LatLng startLocation, LatLng endLocation) {
-    _polylines.clear();
-    _polylines.add(Polyline(
-      polylineId: PolylineId('deliveryRoute'),
-      color: Colors.blue,
-      points: [
-        startLocation,
-        endLocation,
-        // startLocation,
-      ],
-    ));
-
-    // Draw a polyline from the user's location to the delivery location
-    _polylines.add(Polyline(
-      polylineId: PolylineId('userRoute'),
-      color: Colors.indigo,
-      points: [
-        _userLocation,
-        startLocation,
-      ],
-    ));
-
-    // Add icon marker at the user's location
-    _iconMarkers.add(
-      Marker(
-        markerId: MarkerId('movingIcon'),
-        position: _userLocation,
-        icon: _bikeIcon,
-      ),
-    );
-  }
-
-  void _updatePolyline(double fraction) {
-    // Calculate intermediate position along the polyline
-    double lat = _deliveryLocation.latitude +
-        fraction * (_userLocation.latitude - _deliveryLocation.latitude);
-
-    double lng =_deliveryLocation.longitude +
-        fraction * (_userLocation.longitude - _deliveryLocation.longitude);
-
-    setState(() {
-      _animationFraction = fraction;
-      _polylines
-          .removeWhere((polyline) => polyline.polylineId.value == 'userRoute');
-      _polylines.add(Polyline(
-        polylineId: PolylineId('userRoute'),
-        color: Colors.green,
-        points: [
-          _deliveryLocation,
-          LatLng(lat, lng),
-        ],
-      ));
-    });
-  }
-
-  void _updateIconMarker(double fraction) {
-
-    double lat = _deliveryLocation.latitude +
-        fraction * (_userLocation.latitude - _deliveryLocation.latitude);
-
-    double lng = _deliveryLocation.longitude +
-        fraction * (_userLocation.longitude - _deliveryLocation.longitude);
-
-    setState(() {
-      _iconMarkers
-          .removeWhere((marker) => marker.markerId.value == 'movingIcon');
-      _iconMarkers.add(
-        Marker(
-          markerId: MarkerId('movingIcon'),
-          position: LatLng(lat, lng),
-          icon: _bikeIcon,
-        ),
-      );
-    });
-  }
+  Set<Polyline> _polyLines = {};
+  GoogleMapController? mapController;
+  LatLng? source;
+  LatLng destination = const LatLng(17.4380, 78.3986);
 
   @override
   void initState() {
     super.initState();
+    _getCurrentLocation();
+    bikePosition = destination;
+    _animationTimer = Timer.periodic(_animationDuration, (timer) {
+      moveBike();
+    });
+    Future.delayed(const Duration(seconds: 5), () {
+      setState(() {
+        _isDeliveryCompleted = true;
+      });
+    });
     fetchOrderDetails();
-    _getLocationInfo();
-    _loadBikeIcon();
   }
+
+  void moveBike() {
+    if (source != null && bikePosition != null) {
+      setState(() {
+        double deltaLat = (source!.latitude - destination.latitude) / 10;
+        double deltaLng = (source!.longitude - destination.longitude) / 10;
+
+        bikePosition = LatLng(
+          bikePosition.latitude - deltaLat,
+          bikePosition.longitude - deltaLng,
+        );
+
+        if (_calculateDistance(bikePosition, source!) < 0.0001) {
+          _animationTimer.cancel();
+        }
+      });
+    }
+  }
+
+  double _calculateDistance(LatLng start, LatLng end) {
+    return Geolocator.distanceBetween(
+      start.latitude,
+      start.longitude,
+      end.latitude,
+      end.longitude,
+    );
+  }
+
+  Future<Position> _determinePosition() async {
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _updateMapPosition() async {
+    _polyLines.clear();
+    await _getRoutePolyline(source!, destination);
+    setState(() {
+      bikePosition = destination;
+    });
+  }
+
+  Future<void> _getRoutePolyline(LatLng start, LatLng finish) async {
+    final polylinePoints = PolylinePoints();
+    final List<LatLng> polylineCoordinates = [];
+
+    final startPoint = PointLatLng(start.latitude, start.longitude);
+    final finishPoint = PointLatLng(finish.latitude, finish.longitude);
+
+    try {
+      final result = await polylinePoints.getRouteBetweenCoordinates(
+        "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns",
+        startPoint,
+        finishPoint,
+      );
+
+      if (result.points.isNotEmpty) {
+        for (var point in result.points) {
+          polylineCoordinates.add(
+            LatLng(point.latitude, point.longitude),
+          );
+        }
+      } else {
+        print('No route found between $start and $finish');
+        return;
+      }
+    } catch (e) {
+      print('Error fetching route: $e');
+      return;
+    }
+
+    final Polyline polyline = Polyline(
+      polylineId: const PolylineId('polyline'),
+      consumeTapEvents: true,
+      points: polylineCoordinates,
+      color: Colors.blue,
+      width: 4,
+    );
+
+    setState(() {
+      _polyLines.add(polyline);
+    });
+  }
+
+  void _getCurrentLocation() async {
+    try {
+      Position currentPosition = await _determinePosition();
+      setState(() {
+        source = LatLng(currentPosition.latitude, currentPosition.longitude);
+      });
+      _updateMapPosition();
+    } catch (e) {
+      print('Error getting current location: $e');
+    }
+  }
+
   Future<void> fetchOrderDetails() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final UserProvider userProvider =
@@ -382,24 +269,30 @@ class _OrderTrackingState extends State<Order_tracking> {
                     ],
                     backgroundColor: Colors.indigo.shade400,
                     elevation: 5,
-                    collapsedHeight: 160,
+                    collapsedHeight: 180,
                     shadowColor: Colors.grey.shade200,
-                    expandedHeight: 160,
+                    expandedHeight: 180,
                     floating: true,
                     pinned: true,
                     flexibleSpace: FlexibleSpaceBar(
-                      centerTitle: true,
+                      // centerTitle: true,
+                      titlePadding: EdgeInsets.only(
+                          right: 5,
+                          left: MediaQuery.of(context).size.width * 0.03),
                       title: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(height: 100),
+                          SizedBox(height: 80),
                           Text(
                               _isDeliveryCompleted
                                   ? "Order delivered. Enjoy your meal!"
-                                  : " Order on the way .Get ready!",
+                                  : "     Order on the way .Get ready!",
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.aBeeZee(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 22)),
+                                  fontSize: 24)),
                           SizedBox(height: 5),
                           Container(
                             alignment: Alignment.center,
@@ -431,22 +324,20 @@ class _OrderTrackingState extends State<Order_tracking> {
                       SizedBox(
                         height: 450,
                         width: MediaQuery.of(context).size.width,
-                        child: GoogleMap(
-                          onMapCreated: (GoogleMapController controller) {
-                            _controller = controller;
-                            _mapController.complete(controller);
-                          },
-                          initialCameraPosition: CameraPosition(
-                            // target: LatLng(17.3850, 78.4867),
-                            bearing: 90.0,
-                            target: LatLng(0, 0),
-                            zoom: 10.0,
-                          ),
-                          markers: _markers.union(_iconMarkers),
-                          polylines: _polylines,
-                          mapType: _currentMapType,
-                          trafficEnabled: _isTrafficEnabled,
-                        ),
+                        child: source == null
+                            ? const Center(child: CircularProgressIndicator())
+                            : GoogleMap(
+                                polylines: _polyLines,
+                                onMapCreated: (c) {
+                                  mapController = c;
+                                },
+                                myLocationEnabled: true,
+                                initialCameraPosition: CameraPosition(
+                                  target: source!,
+                                  zoom: 15.0,
+                                ),
+                                mapType: MapType.normal,
+                              ),
                       ),
                       Positioned(
                         bottom: 100,
@@ -479,7 +370,7 @@ class _OrderTrackingState extends State<Order_tracking> {
                       padding: const EdgeInsets.all(10.0),
                       child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height: 250,
+                        height: MediaQuery.of(context).size.height * 0.35,
                         decoration: BoxDecoration(
                             color: Colors.white,
                             boxShadow: [
@@ -719,9 +610,11 @@ class _OrderTrackingState extends State<Order_tracking> {
                               children: [
                                 Expanded(child: SizedBox()),
                                 Text(
-                                    "Total Amount: ₹${totalAmount.toStringAsFixed(2)},",
+                                    "Total Amount: ₹${totalAmount.toStringAsFixed(1)},",
                                     style: TextStyle(
-                                        fontSize: 18, color: Colors.black)),
+                                        fontSize: 18,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
                               ],
                             ),
                             SizedBox(height: 10),
@@ -771,7 +664,7 @@ class _OrderTrackingState extends State<Order_tracking> {
                       padding: const EdgeInsets.all(10.0),
                       child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height: 160,
+                        height: MediaQuery.of(context).size.height * 0.25,
                         decoration: BoxDecoration(
                             color: const Color.fromRGBO(255, 255, 255, 1),
                             boxShadow: [
@@ -816,13 +709,13 @@ class _OrderTrackingState extends State<Order_tracking> {
                                         style: TextStyle(
                                             color: Colors.black,
                                             fontSize: 18,
-                                            fontWeight: FontWeight.w600),
+                                            fontWeight: FontWeight.w400),
                                       ),
                                       SizedBox(height: 5),
                                       Text(
                                         "Add alternate contact ",
                                         style: TextStyle(
-                                            color: Colors.indigo, fontSize: 16),
+                                            color: Colors.indigo, fontSize: 14),
                                       )
                                     ],
                                   )
@@ -856,13 +749,14 @@ class _OrderTrackingState extends State<Order_tracking> {
                                         style: TextStyle(
                                             color: Colors.black,
                                             fontSize: 18,
-                                            fontWeight: FontWeight.w600),
+                                            fontWeight: FontWeight.w400),
                                       ),
                                       SizedBox(height: 5),
                                       Text(
-                                        locationInfo,
+                                        "",
+                                        // locationInfo,
                                         style: TextStyle(
-                                            color: Colors.grey, fontSize: 16),
+                                            color: Colors.grey, fontSize: 14),
                                       ),
                                       SizedBox(height: 5),
                                       InkWell(
@@ -871,7 +765,7 @@ class _OrderTrackingState extends State<Order_tracking> {
                                           "Change address",
                                           style: TextStyle(
                                               color: Colors.indigo,
-                                              fontSize: 16),
+                                              fontSize: 14),
                                         ),
                                       ),
                                     ],
@@ -883,55 +777,6 @@ class _OrderTrackingState extends State<Order_tracking> {
                         ),
                       ),
                     ),
-                    // Padding(
-                    //   padding:
-                    //       EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                    //   child: OrderTrackerZen(
-                    //     animation_duration: 2000,
-                    //     tracker_data: [
-                    //       TrackerData(
-                    //         title: "Order Placed",
-                    //         date: orderTimestamp,
-                    //         tracker_details: [
-                    //           TrackerDetails(
-                    //             title: "Your order was placed on Uber Eats",
-                    //             datetime: orderTimestamp,
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       TrackerData(
-                    //         title: "Food is preparing",
-                    //         date: orderTimestamp,
-                    //         tracker_details: [
-                    //           TrackerDetails(
-                    //             title: "Your order is preparing with hygiene",
-                    //             datetime: "",
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       TrackerData(
-                    //         title: "Deliver is on the way",
-                    //         date: orderTimestamp,
-                    //         tracker_details: [
-                    //           TrackerDetails(
-                    //             title: "You received your order, by Uber Eats",
-                    //             datetime: "",
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       TrackerData(
-                    //         title: "Delivered on time ",
-                    //         date: orderTimestamp,
-                    //         tracker_details: [
-                    //           TrackerDetails(
-                    //             title: "You received your order, by uber eats ",
-                    //             datetime: "",
-                    //           ),
-                    //         ],
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
                     SizedBox(
                       height: 100,
                     )
@@ -1051,3 +896,110 @@ class OrderItemCard extends StatelessWidget {
     );
   }
 }
+
+class WidgetGoogleMap extends StatefulWidget {
+  const WidgetGoogleMap({Key? key}) : super(key: key);
+
+  @override
+  _WidgetGoogleMapState createState() => _WidgetGoogleMapState();
+}
+
+class _WidgetGoogleMapState extends State<WidgetGoogleMap> {
+  Set<Polyline> _polyLines = {};
+  GoogleMapController? mapController;
+  LatLng? source;
+  LatLng destination =
+      const LatLng(17.4380, 78.3986); // Change to your destination coordinates
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: source == null
+          ? const Center(child: CircularProgressIndicator())
+          : GoogleMap(
+              polylines: _polyLines,
+              onMapCreated: (c) {
+                mapController = c;
+              },
+              myLocationEnabled: true,
+              initialCameraPosition: CameraPosition(
+                target: source!,
+                zoom: 12.0,
+              ),
+              mapType: MapType.normal,
+            ),
+    );
+  }
+
+  void _getCurrentLocation() async {
+    try {
+      Position currentPosition = await _determinePosition();
+      setState(() {
+        source = LatLng(currentPosition.latitude, currentPosition.longitude);
+      });
+      _updateMapPosition();
+    } catch (e) {
+      print('Error getting current location: $e');
+    }
+  }
+
+  Future<Position> _determinePosition() async {
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _updateMapPosition() async {
+    _polyLines.clear();
+    await _getRoutePolyline(source!, destination);
+    setState(() {});
+  }
+
+  Future<void> _getRoutePolyline(LatLng start, LatLng finish) async {
+    final polylinePoints = PolylinePoints();
+    final List<LatLng> polylineCoordinates = [];
+
+    final startPoint = PointLatLng(start.latitude, start.longitude);
+    final finishPoint = PointLatLng(finish.latitude, finish.longitude);
+
+    try {
+      final result = await polylinePoints.getRouteBetweenCoordinates(
+        APIKEY,
+        startPoint,
+        finishPoint,
+      );
+
+      if (result.points.isNotEmpty) {
+        for (var point in result.points) {
+          polylineCoordinates.add(
+            LatLng(point.latitude, point.longitude),
+          );
+        }
+      } else {
+        print('No route found between $start and $finish');
+        return;
+      }
+    } catch (e) {
+      print('Error fetching route: $e');
+      return;
+    }
+
+    final Polyline polyline = Polyline(
+      polylineId: const PolylineId('polyline'),
+      consumeTapEvents: true,
+      points: polylineCoordinates,
+      color: Colors.blue,
+      width: 4,
+    );
+
+    setState(() {
+      _polyLines.add(polyline);
+    });
+  }
+}
+
+String APIKEY = "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns";

@@ -1,8 +1,8 @@
 // ignore_for_file: camel_case_types
 
 import 'package:flutter/material.dart';
-import 'package:uber_eats/Features_Layouts/groceries_items_screen.dart';
-import 'package:uber_eats/Pages/groceries_1.dart';
+import 'package:uber_eats/groceries/groceries_items_screen.dart';
+import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uber_eats/dash_screen.dart';
 
 class groceries_search_screen extends StatefulWidget {
@@ -26,10 +26,8 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> displayCategories = filteredCategories.isEmpty
-        ? []
-        : filteredCategories;
-   
+    List<String> displayCategories =
+        filteredCategories.isEmpty ? [] : filteredCategories;
 
     return Scaffold(
       body: NestedScrollView(
@@ -39,9 +37,9 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
               automaticallyImplyLeading: false,
               backgroundColor: Colors.indigo,
               elevation: 5,
-              collapsedHeight: 120,
+              collapsedHeight: 90,
               shadowColor: Colors.grey,
-              expandedHeight: 120,
+              expandedHeight: 90,
               floating: true,
               pinned: true,
               flexibleSpace: Column(
@@ -59,10 +57,10 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           color: Colors.white,
-                          size: 30,
+                          size: 26,
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      // const SizedBox(width: 5),
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.85,
                         child: Container(
@@ -74,9 +72,8 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
                             onChanged: onSearchTextChanged,
                             decoration: const InputDecoration(
                                 hintText: 'Search Categories',
-                                prefixIcon:  Icon(Icons.search),
-                                border: InputBorder.none
-                                ),
+                                prefixIcon: Icon(Icons.search),
+                                border: InputBorder.none),
                           ),
                         ),
                       ),
@@ -107,12 +104,15 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          groceries_items_screen(category: categoryKey),
+                      builder: (context) => groceries_items_screen(
+                        category: categoryKey,
+                        categoryImage: categoryImage,
+                        categoryName: categoryName,
+                      ),
                     ),
                   );
                 },
-                child: CategoryCard(
+                child: CategoryCard_search(
                   categoryName: categoryName,
                   categoryImage: categoryImage,
                 ),
@@ -130,5 +130,55 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
             categoryData[category]!.toLowerCase().contains(text.toLowerCase()))
         .toList();
     setState(() {});
+  }
+}
+
+class CategoryCard_search extends StatelessWidget {
+  final String categoryName;
+  final String categoryImage;
+
+  const CategoryCard_search({
+    Key? key,
+    required this.categoryName,
+    required this.categoryImage,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: Colors.indigo.shade200,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Center(
+            child: Text(
+              categoryName,
+              style: TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.indigo.shade800),
+            ),
+          ),
+          SizedBox(height: 5),
+          Container(
+            alignment: Alignment.bottomCenter,
+            // height: 80,
+
+            height: MediaQuery.of(context).size.width * 0.30,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: Colors.indigo.shade200,
+              image: DecorationImage(
+                image: AssetImage(categoryImage),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

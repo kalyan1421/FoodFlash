@@ -2,7 +2,6 @@
 
 import 'package:uber_eats/Screens/RestaurantDetailsPage.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:uber_eats/Screens/search_bar_screen.dart';
 import 'package:uber_eats/Tracking/order_traking.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uber_eats/Screens/ordes_page.dart';
@@ -13,6 +12,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:uber_eats/groceries/groceries_search_screen.dart';
+
 class RestaurantList extends StatefulWidget {
   const RestaurantList({super.key});
 
@@ -21,31 +22,6 @@ class RestaurantList extends StatefulWidget {
 }
 
 class _RestaurantListState extends State<RestaurantList> {
-  // bool itemsInOrder = false;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   checkItemsInOrder();
-  // }
-
-  // Future<void> checkItemsInOrder() async {
-  //   final UserProvider userProvider =
-  //       Provider.of<UserProvider>(context, listen: false);
-  // final userId = userProvider.getUser?.uid; // Replace with the actual user ID
-  //   final orderCollection = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(userId)
-  //       .collection('orders');
-
-  //   final orderQuery = await orderCollection.limit(1).get();
-  //   if (orderQuery.docs.isNotEmpty) {
-  //     setState(() {
-  //       itemsInOrder = true;
-  //     });
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     CollectionReference restaurants =
@@ -93,7 +69,7 @@ class _RestaurantListState extends State<RestaurantList> {
                                 decoration: const BoxDecoration(
                                   image: DecorationImage(
                                     image: AssetImage("assets/utiles/Logo.png"),
-                                    fit: BoxFit.fitWidth,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ),
@@ -107,7 +83,7 @@ class _RestaurantListState extends State<RestaurantList> {
                                         textAlign: TextAlign.center,
                                         'On time guarantee',
                                         textStyle: const TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w600),
                                         colors: colorizeColors,
                                       ),
@@ -115,14 +91,14 @@ class _RestaurantListState extends State<RestaurantList> {
                                         textAlign: TextAlign.right,
                                         '    Order Now 🍔',
                                         textStyle: const TextStyle(
-                                            fontSize: 20,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w600),
                                         colors: colorizeColors,
                                       ),
                                       ColorizeAnimatedText(
                                         '    Join Now 👑',
                                         textStyle: const TextStyle(
-                                            fontSize: 20,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w600),
                                         colors: colorizeColors,
                                       ),
@@ -146,7 +122,7 @@ class _RestaurantListState extends State<RestaurantList> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: MediaQuery.of(context).size.width / 4,
+                              width: MediaQuery.of(context).size.width / 5,
                               height: 1,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
@@ -164,7 +140,7 @@ class _RestaurantListState extends State<RestaurantList> {
                               ),
                             ),
                             Container(
-                              width: MediaQuery.of(context).size.width / 4,
+                              width: MediaQuery.of(context).size.width / 5,
                               height: 1,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
@@ -279,9 +255,8 @@ class _RestaurantListState extends State<RestaurantList> {
                               decoration: BoxDecoration(
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey
-                                        .withOpacity(0.5),
-                                    spreadRadius: 2, 
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
                                     blurRadius: 2,
                                     offset: const Offset(2, 0),
                                   ),
@@ -806,7 +781,7 @@ class explore_Widget extends StatelessWidget {
                       child: Text(
                         "Offers",
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                            fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                     ),
                     const Center(
@@ -814,7 +789,7 @@ class explore_Widget extends StatelessWidget {
                         "Up to 60% OFF",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.black),
                       ),
                     )
@@ -860,7 +835,7 @@ class explore_Widget extends StatelessWidget {
                       child: Text(
                         "Healthy",
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                            fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                     ),
                     const Center(
@@ -868,7 +843,7 @@ class explore_Widget extends StatelessWidget {
                         "Curated Dishes",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.black),
                       ),
                     )
@@ -914,7 +889,7 @@ class explore_Widget extends StatelessWidget {
                       child: Text(
                         "Fast Delivery",
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                            fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                     ),
                     const Center(
@@ -922,7 +897,7 @@ class explore_Widget extends StatelessWidget {
                         "Just 15-20 mins ",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Colors.black),
                       ),
                     )
@@ -984,7 +959,7 @@ class MindItems_Widget extends StatelessWidget {
               ),
               Container(
                 width: MediaQuery.of(context).size.width / 3,
-                height: 250,
+                height: MediaQuery.of(context).size.height * 0.35,
                 color: Colors.transparent,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1043,7 +1018,8 @@ class MindItems_Widget extends StatelessWidget {
               ),
               SizedBox(
                 width: MediaQuery.of(context).size.width / 3,
-                height: 250,
+
+                height: MediaQuery.of(context).size.height * 0.35,
                 // color: Colors.amber,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1102,7 +1078,8 @@ class MindItems_Widget extends StatelessWidget {
               ),
               SizedBox(
                 width: MediaQuery.of(context).size.width / 3,
-                height: 250,
+
+                height: MediaQuery.of(context).size.height * 0.35,
                 // color: Colors.amber,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1161,7 +1138,7 @@ class MindItems_Widget extends StatelessWidget {
               ),
               SizedBox(
                 width: MediaQuery.of(context).size.width / 3,
-                height: 250,
+                height: MediaQuery.of(context).size.height * 0.35,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -1219,7 +1196,7 @@ class MindItems_Widget extends StatelessWidget {
               ),
               SizedBox(
                 width: MediaQuery.of(context).size.width / 3,
-                height: 250,
+                height: MediaQuery.of(context).size.height * 0.35,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -1376,7 +1353,7 @@ class _Intro_WidgetState extends State<Intro_Widget> {
               border: Border.all(color: Colors.black, width: 1),
               image: const DecorationImage(
                 fit: BoxFit.cover,
-                image: AssetImage("assets/profile.jpg"),
+                image: AssetImage("assets/utiles/profile_ani.png"),
               ),
             ),
           ),
@@ -1401,7 +1378,7 @@ class _SearchBarState extends State<SearchBar> {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const Search_bar_screen(),
+              builder: (context) => groceries_search_screen(),
             ));
       },
       child: Container(
@@ -1412,10 +1389,10 @@ class _SearchBarState extends State<SearchBar> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.5), // Shadow color
-              spreadRadius: 2, // Spread radius
-              blurRadius: 2, // Blur radius
-              offset: const Offset(0, 3), // Offset in the Y direction
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 2,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -1437,7 +1414,7 @@ class _SearchBarState extends State<SearchBar> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Search_bar_screen(),
+                          builder: (context) => groceries_search_screen(),
                         ));
                   },
                   child: SizedBox(

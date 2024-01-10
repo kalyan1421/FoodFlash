@@ -9,21 +9,21 @@ import 'package:uber_eats/Tracking/order_traking.dart';
 import 'package:uber_eats/model/cart.dart';
 import 'package:upi_india/upi_india.dart';
 
-class upi_payment extends StatefulWidget {
+class Food_upi_payment extends StatefulWidget {
   final double totalPrice;
   final List<CartSavedItem> cartItems;
 
-  const upi_payment({
+  const Food_upi_payment({
     Key? key,
     required this.totalPrice,
     required this.cartItems,
   }) : super(key: key);
 
   @override
-  _upi_paymentState createState() => _upi_paymentState();
+  _Food_upi_paymentState createState() => _Food_upi_paymentState();
 }
 
-class _upi_paymentState extends State<upi_payment> {
+class _Food_upi_paymentState extends State<Food_upi_payment> {
   Future<UpiResponse>? _transaction;
   final UpiIndia _upiIndia = UpiIndia();
   List<UpiApp>? apps;
@@ -118,7 +118,7 @@ class _upi_paymentState extends State<upi_payment> {
 
   void _handleTransactionStatus(String status) {
     // if (status == 'success') {
-      if (status == 'failure') {
+    if (status == 'failure') {
       saveOrderDetails().then((_) {
         Future.delayed(const Duration(seconds: 1), () {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -140,7 +140,6 @@ class _upi_paymentState extends State<upi_payment> {
           content: Text('Payment Failed'),
         ));
         Navigator.pop(context);
-    
       });
     } else {
       print("Payment Error");
@@ -177,6 +176,7 @@ class _upi_paymentState extends State<upi_payment> {
         final orderData = {
           'timestamp': FieldValue.serverTimestamp(),
           'totalAmount': widget.totalPrice,
+        
           'items': widget.cartItems.map((item) {
             return {
               'item name': item.name,
@@ -184,8 +184,8 @@ class _upi_paymentState extends State<upi_payment> {
               'price': item.price,
             };
           }).toList(),
+          
         };
-        
 
         await orderRef.set(orderData);
       }

@@ -21,38 +21,50 @@ class _login_pageState extends State<login_page> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isDisposed = false;
+
   @override
   void dispose() {
+    _isDisposed = true;
     super.dispose();
+
     _emailController.dispose();
     _passwordController.dispose();
   }
 
   // ignore: non_constant_identifier_names
   Future<bool> Login__User() async {
-  if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-    showCustomSnackBar(context, "Please fill all fields");
-    return false;
-  }
-  setState(() {
-    _islooading = true;
-  });
-  String res = await Authmethods().loginUser(
-      email: _emailController.text, password: _passwordController.text);
-  setState(() {
-    _islooading = false;
-  });
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      showCustomSnackBar(context, "Please fill all fields");
+      return false;
+    }
 
-  if (res == "Success") {
-    // Password is correct
-    return true;
-  } else {
-    // Password is incorrect
-    showCustomSnackBar(context, "Incorrect username or password");
-    return false;
-  }
-}
+    if (!_isDisposed) {
+      setState(() {
+        _islooading = true;
+      });
+    }
 
+    String res = await Authmethods().loginUser(
+        email: _emailController.text, password: _passwordController.text);
+
+    if (!_isDisposed) {
+      setState(() {
+        _islooading = false;
+      });
+    }
+
+    if (res == "Success") {
+      // Password is correct
+      return true;
+    } else {
+      // Password is incorrect
+      if (!_isDisposed) {
+        showCustomSnackBar(context, "Incorrect username or password");
+      }
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +83,11 @@ class _login_pageState extends State<login_page> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Uber",
+                    Text("Foodie",
                         style: GoogleFonts.carterOne(
                             fontSize: 40, color: Colors.blue)),
                     Text(
-                      " Eats",
+                      " Flash",
                       style: GoogleFonts.carterOne(
                           fontSize: 40, color: Colors.black),
                     ),

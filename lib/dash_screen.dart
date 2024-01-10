@@ -9,7 +9,7 @@ import 'package:uber_eats/Auth/UI/Login_UI.dart';
 import 'package:uber_eats/Pages/Dining_page.dart';
 import 'package:uber_eats/Pages/Home_Page.dart';
 import 'package:uber_eats/Pages/Profile_page.dart';
-import 'package:uber_eats/Pages/groceries_1.dart';
+import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uber_eats/Provider/user_provider.dart';
 import 'package:uber_eats/Pages/Cart_page.dart';
 
@@ -46,26 +46,26 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     addData();
-    checkItemsInOrder();
+    // checkItemsInOrder();
     _user = _auth.currentUser;
   }
 
-  Future<void> checkItemsInOrder() async {
-    final UserProvider userProvider =
-        Provider.of<UserProvider>(context, listen: false);
-    final userId = userProvider.getUser?.uid; // Replace with the actual user ID
-    final orderCollection = FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('orders');
+  // Future<void> checkItemsInOrder() async {
+  //   final UserProvider userProvider =
+  //       Provider.of<UserProvider>(context, listen: false);
+  //   final userId = userProvider.getUser?.uid; // Replace with the actual user ID
+  //   final orderCollection = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(userId)
+  //       .collection('orders');
 
-    final orderQuery = await orderCollection.limit(1).get();
-    if (orderQuery.docs.isNotEmpty) {
-      setState(() {
-        itemsInOrder = true;
-      });
-    }
-  }
+  //   final orderQuery = await orderCollection.limit(1).get();
+  //   if (orderQuery.docs.isNotEmpty) {
+  //     setState(() {
+  //       itemsInOrder = true;
+  //     });
+  //   }
+  // }
 
   addData() async {
     UserProvider userProvider = Provider.of(context, listen: false);
@@ -76,10 +76,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _screens = [
     const RestaurantList(),
-    const Dining_page(),
     const CategoryScreen(),
     const CartScreen(),
     const Profile_Page(),
+    // MapPage()
   ];
 
   @override
@@ -132,18 +132,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 text: "Delivery",
                 iconColor: Colors.grey,
               ),
+              // GButton(
+              //   icon: Icons.local_dining_outlined,
+              //   text: "DineOut",
+              //   iconColor: Colors.grey,
+              // ),
               GButton(
-                icon: Icons.dining_sharp,
-                text: "Dining",
+                icon: Icons.store,
+                text: "Instamart",
                 iconColor: Colors.grey,
               ),
               GButton(
-                icon: Icons.dining_sharp,
-                text: "Dining",
-                iconColor: Colors.grey,
-              ),
-              GButton(
-                icon: Icons.shopping_cart,
+                icon: Icons.shopping_bag,
                 text: "Cart",
                 iconColor: Colors.grey,
               ),

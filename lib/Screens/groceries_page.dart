@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uber_eats/Pages/groceries_1.dart';
+import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uuid/uuid.dart';
 
 class GroceryItem {

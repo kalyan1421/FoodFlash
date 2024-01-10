@@ -1,5 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 // ignore: depend_on_referenced_packages
+
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +13,8 @@ import 'package:uber_eats/Auth/UI/Login_UI.dart';
 import 'package:flutter_animator/flutter_animator.dart';
 import 'dash_screen.dart';
 import 'package:flutter_config/flutter_config.dart';
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 BounceIn(
                   child: Text(
-                    "Uber",
+                    "Food",
                     style: GoogleFonts.carterOne(
                       fontSize: 50,
                       color: Colors.indigo,
@@ -78,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 BounceIn(
                   // Animation effect
                   child: Text(
-                    " Eats",
+                    " Flash",
                     style: GoogleFonts.carterOne(
                       fontSize: 50,
                       color: Colors.black,

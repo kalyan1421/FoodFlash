@@ -69,10 +69,10 @@ class _SignUp_UIState extends State<SignUp_UI> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Uber",
+                    Text("Foodie",
                         style: GoogleFonts.carterOne(
                             fontSize: 40, color: Colors.blue)),
-                    Text(" Eats",
+                    Text(" Flash",
                         style: GoogleFonts.carterOne(
                             fontSize: 40, color: Colors.black)),
                   ],

@@ -27,7 +27,7 @@
 // }
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uber_eats/Pages/groceries_1.dart';
+import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uuid/uuid.dart';
 
 class GroceryItem {
@@ -44,7 +44,7 @@ class GroceryItem {
   });
 }
 
-class groceries extends StatelessWidget {
+class groceries_add extends StatelessWidget {
   // Initialize Firestore
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final Uuid uuid = const Uuid();
@@ -82,45 +82,45 @@ class groceries extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Define items for each category
-    List<GroceryItem> fruitsAndVegetables = [
+    List<GroceryItem> MasalasAndDryFruits = [
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Mango',
+          title: 'Pe Almond',
           image: 'mango_image_url.jpg',
-          price: 50.0),
+          price: 350.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Banana',
+          title: 'Groundnut',
           image: 'banana_image_url.jpg',
-          price: 20.0),
+          price: 120.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Apple',
+          title: 'Cashew Whole',
           image: 'apple_image_url.jpg',
-          price: 30.0),
+          price: 180.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Orange',
+          title: 'Roasted Cashew',
           image: 'orange_image_url.jpg',
-          price: 25.0),
+          price: 340.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Grapes',
+          title: 'Kalmi Dates',
           image: 'grapes_image_url.jpg',
-          price: 40.0),
+          price: 280.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Tomato',
+          title: 'Blask Raisins',
           image: 'tomato_image_url.jpg',
-          price: 15.0),
+          price: 220.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Potato',
+          title: 'Chia Seeds',
           image: 'potato_image_url.jpg',
-          price: 10.0),
+          price: 140.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Onion',
+          title: 'Jeera Whole',
           image: 'onion_image_url.jpg',
           price: 18.0),
       GroceryItem(
@@ -155,30 +155,30 @@ class groceries extends StatelessWidget {
           price: 15.0),
     ];
 
-    List<GroceryItem> cookingAndOils = [
+    List<GroceryItem> TeaAndCoffe = [
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Mustard Oil',
+          title: 'Flavourful Tea',
           image: 'mustard_oil_image_url.jpg',
-          price: 40.0),
+          price: 250.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Sunflower Oil',
+          title: 'Bourn Vita',
           image: 'sunflower_oil_image_url.jpg',
-          price: 30.0),
+          price: 300.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Ghee',
+          title: 'Red Lable ',
           image: 'ghee_image_url.jpg',
-          price: 60.0),
+          price: 500.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Coconut Oil',
+          title: 'Assam Tea',
           image: 'coconut_oil_image_url.jpg',
           price: 45.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Olive Oil',
+          title: 'Natural care Tea Oil',
           image: 'olive_oil_image_url.jpg',
           price: 55.0),
       GroceryItem(
@@ -228,150 +228,150 @@ class groceries extends StatelessWidget {
           price: 30.0),
     ];
 
-    List<GroceryItem> meatAndFish = [
+    List<GroceryItem> CleaningEssentails = [
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Chicken Curry Cut',
+          title: 'Washing Powder',
           image: 'chicken_curry_cut_image_url.jpg',
           price: 120.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Mutton',
+          title: 'Ariel Detergent Powder',
           image: 'mutton_image_url.jpg',
           price: 200.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Rohu Fish',
+          title: 'Surf Excel Detergent Powder',
           image: 'rohu_fish_image_url.jpg',
           price: 150.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Pomfret',
+          title: 'Surf Excel Liquid Detergent',
           image: 'pomfret_image_url.jpg',
           price: 180.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Prawns',
+          title: 'Lizol Surface cleaner',
           image: 'prawns_image_url.jpg',
           price: 250.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Chicken Sausages',
+          title: 'Lizol Disinfectant Cleaner',
           image: 'chicken_sausages_image_url.jpg',
           price: 180.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Eggs',
+          title: 'Lizol Disinfectant Jasmine Cleaner',
           image: 'eggs_image_url.jpg',
-          price: 6.0),
+          price: 300.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Turkey (for festive seasons)',
+          title: 'Vim Dishwash Liquid Gel',
           image: 'turkey_image_url.jpg',
           price: 300.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Salmon',
+          title: 'Sponge Wipe - Large ',
           image: 'salmon_image_url.jpg',
           price: 250.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Crab',
-          image: 'crab_image_url.jpg',
+          title: 'Scrub Magic 2 in 1 ',
+          image: 'crab_image_u in rl.jpg',
           price: 200.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Lamb Chops',
+          title: 'Microfiber Duster',
           image: 'lamb_chops_image_url.jpg',
           price: 280.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Hilsa Fish',
+          title: 'Gala Twin Bucket spin  Mop',
           image: 'hilsa_fish_image_url.jpg',
           price: 180.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Catfish (Singhara)',
+          title: 'Bathroom Squeegee Wiper',
           image: 'catfish_image_url.jpg',
           price: 120.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Quail',
+          title: 'Floor Squeegee Wiper',
           image: 'quail_image_url.jpg',
           price: 150.0),
     ];
 
-    List<GroceryItem> bakeryAndSnacks = [
+    List<GroceryItem> BathBodyHai = [
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Naan',
+          title: '6 Oil Nourish Shampoo',
           image: 'naan_image_url.jpg',
-          price: 25.0),
+          price: 399.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Roti',
+          title: 'TRESemme Keratin Shampoo',
           image: 'roti_image_url.jpg',
-          price: 15.0),
+          price: 400.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Samosa',
+          title: 'Dove Daily Shine Shampoo',
           image: 'samosa_image_url.jpg',
-          price: 10.0),
+          price: 440.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Pakora',
+          title: 'Head & Shoulders Cool Menthol Shampoo',
           image: 'pakora_image_url.jpg',
-          price: 12.0),
+          price: 350.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Biscuits (various types)',
+          title: 'Cinthol Bath Soap',
           image: 'biscuits_image_url.jpg',
-          price: 20.0),
+          price: 170.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Bread (White and Brown)',
+          title: 'Godrej No.1 Lime & Aloe Vera',
           image: 'bread_image_url.jpg',
-          price: 25.0),
+          price: 166.0),
       GroceryItem(
           id: generateUniqueId(),
           title: 'Poha (Flattened Rice)',
           image: 'poha_image_url.jpg',
-          price: 18.0),
+          price: 150.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Idli/Dosa Batter',
+          title: 'Dettol Intende Cool Soap',
           image: 'idli_dosa_batter_image_url.jpg',
-          price: 30.0),
+          price: 300.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Mathri',
+          title: "Neutrogena Deep Clean Foaming Cleaner",
           image: 'mathri_image_url.jpg',
-          price: 15.0),
+          price: 320.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Kachori',
+          title: 'Garnier Facewash',
           image: 'kachori_image_url.jpg',
-          price: 12.0),
+          price: 220.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Khakhra',
+          title: 'Clean & Clear Foaming Facewash',
           image: 'khakhra_image_url.jpg',
-          price: 20.0),
+          price: 200.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Sev',
+          title: 'Cetaphil Oily Skin cleanser',
           image: 'sev_image_url.jpg',
-          price: 10.0),
+          price: 500.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Dhokla Mix',
+          title: 'Nivea Face Wash',
           image: 'dhokla_mix_image_url.jpg',
-          price: 25.0),
+          price: 250.0),
       GroceryItem(
           id: generateUniqueId(),
-          title: 'Aloo Bonda',
+          title: 'Olay Total 7 in 1 Foaming Cleanser',
           image: 'aloo_bonda_image_url.jpg',
-          price: 18.0),
+          price: 180.0),
     ];
 
     List<GroceryItem> beverages = [
@@ -468,11 +468,11 @@ class groceries extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 // Save data for each category
-                saveDataToFirestore(fruitsAndVegetables, 'fruitsAndVegetables');
-                saveDataToFirestore(cookingAndOils, 'cookingAndOils');
-                saveDataToFirestore(meatAndFish, 'meatAndFish');
-                saveDataToFirestore(bakeryAndSnacks, 'bakeryAndSnacks');
-                saveDataToFirestore(beverages, 'beverages');
+                saveDataToFirestore(BathBodyHai, 'BathBodyHai');
+                saveDataToFirestore(CleaningEssentails, 'CleaningEssentails');
+                // saveDataToFirestore(meatAndFish, 'meatAndFish');
+                // saveDataToFirestore(bakeryAndSnacks, 'bakeryAndSnacks');
+                // saveDataToFirestore(beverages, 'beverages');
               },
               child: const Text('Save Data to Firebase'),
             ),

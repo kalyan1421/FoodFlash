@@ -26,3 +26,30 @@ class CartSavedItem {
     );
   }
 }
+class GroceriesCartItem {
+  final String itemId;
+  final String name;
+  final double price;
+  final int quantity;
+  final String imageUrl;
+
+  GroceriesCartItem({
+    required this.itemId,
+    required this.name,
+    required this.price,
+    required this.quantity,
+    required this.imageUrl,
+  });
+
+  factory GroceriesCartItem.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return GroceriesCartItem(
+      itemId: doc.id,
+      name: data['itemname'] ?? '',
+      price: (data['itemprice'] ?? 0.0).toDouble(),
+      quantity: data['quantity'] ?? 0,
+      imageUrl: data['itemimage'] ?? '',
+    );
+  }
+}
+

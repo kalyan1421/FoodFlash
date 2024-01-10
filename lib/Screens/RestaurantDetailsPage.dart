@@ -132,7 +132,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                     titlePadding: const EdgeInsets.symmetric(horizontal: 0),
                     title: Text(
                       restaurantName,
-                      style: const TextStyle(fontSize: 24, color: Colors.grey),
+                      style: const TextStyle(fontSize: 24, color: Colors.white),
                     ),
                     centerTitle: true,
                     background: Image.network(
@@ -402,23 +402,21 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                         InkWell(
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                // Setting the elevation to 0 to make the snack bar flat
-                                elevation: 0,
+                              SnackBar(  elevation: 0,
                                 content: Card(
-                                  // Rounding the border of the card
+                               
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(5)),
-                                  // Setting the clipping behavior for the card
+                                 
                                   clipBehavior: Clip.antiAliasWithSaveLayer,
                                   elevation: 1,
                                   child: Container(
-                                    // Adding padding to the conta iner
+                                 
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 5),
                                     child: Row(
                                       children: [
-                                        // Adding space to the left side
+                                   
                                         const SizedBox(width: 5),
                                         const Expanded(
                                           child: Column(
@@ -428,7 +426,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                             children: <Widget>[Text("Pressed")],
                                           ),
                                         ),
-                                        // Adding a vertical line between the product name and the undo button
+                                       
                                         Container(
                                             color: Colors.grey,
                                             height: 35,
@@ -436,21 +434,19 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                             margin: const EdgeInsets.symmetric(
                                                 horizontal: 5)),
                                         SnackBarAction(
-                                          // Displaying the undo button
                                           label: "UNDO",
                                           textColor: Theme.of(context)
                                               .colorScheme
                                               .primary,
-                                          // Callback function for when the undo button is pressed
                                           onPressed: () {},
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                                // Setting the background color to transparent
+                               
                                 backgroundColor: Colors.transparent,
-                                // Setting the duration for how long the snack bar should be visible
+                          
                                 duration: const Duration(seconds: 3),
                               ),
                             );
@@ -731,8 +727,7 @@ class _ItemsCardState extends State<ItemsCard> {
             'quantity': currentQuantity + quantityChange,
           });
           setState(() {
-            _quantity =
-                currentQuantity + quantityChange; // Update the local quantity
+            _quantity = currentQuantity + quantityChange;
           });
         } else {
           // If the item is not in the cart, add it with the quantity
@@ -754,11 +749,6 @@ class _ItemsCardState extends State<ItemsCard> {
           });
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Item added to cart'),
-          ),
-        );
         print('Item added to cart successfully!');
       } else {
         print('User is not authenticated. Cannot add to cart.');
@@ -922,18 +912,20 @@ class _ItemsCardState extends State<ItemsCard> {
                                 if (_quantity > 1) {
                                   addToCart(-1);
                                 }
+                                showCustomSnackBar(
+                                    context, "Item remove to cart");
                               },
                             ),
                             Text(
-                              _quantity
-                                  .toString(), // Display the current quantity
+                              _quantity.toString(),
                               style: TextStyle(
                                   color: Colors.pink.shade400, fontSize: 18),
                             ),
                             IconButton(
                               icon: const Icon(Icons.add),
                               onPressed: () {
-                                // Increase the quantity by 1
+                                showCustomSnackBar(
+                                    context, "Item added to cart");
                                 addToCart(1);
                               },
                             ),
