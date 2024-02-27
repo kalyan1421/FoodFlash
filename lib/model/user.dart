@@ -14,6 +14,6 @@ class User {
     return User(
         email: snapshot['email'],
         uid: snapshot['uid'],
-        username: snapshot['username']);
+        username: snapshot['username'],);
   }
 }

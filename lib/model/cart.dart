@@ -6,14 +6,16 @@ class CartSavedItem {
   final double price;
   final int quantity;
   final String imageUrl;
+  final String vegnoo;
+  final double addonprice;
 
-  CartSavedItem({
-    required this.itemId,
-    required this.name,
-    required this.price,
-    required this.quantity,
-    required this.imageUrl,
-  });
+  CartSavedItem(
+      {required this.itemId,
+      required this.name,
+      required this.price,
+      required this.quantity,
+      required this.imageUrl,
+      required this.vegnoo, required this.addonprice});
 
   factory CartSavedItem.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -23,9 +25,12 @@ class CartSavedItem {
       price: (data['itemprice'] ?? 0.0).toDouble(),
       quantity: data['quantity'] ?? 0,
       imageUrl: data['itemimage'] ?? '',
+      vegnoo: data['vegnon'] ?? '',
+      addonprice:( data['totalPrice'] ?? 0.0).toDouble(),
     );
   }
 }
+
 class GroceriesCartItem {
   final String itemId;
   final String name;
@@ -52,4 +57,3 @@ class GroceriesCartItem {
     );
   }
 }
-

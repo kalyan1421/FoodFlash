@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shimmer/shimmer.dart';
 
-
-const String GOOGLE_MAPS_API_KEY= "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns";
+const String GOOGLE_MAPS_API_KEY = "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns";
 showSnackBar(String content, BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(content)));
 }
@@ -224,6 +224,98 @@ class _location_instaState extends State<location_insta> {
         ),
         const SizedBox(width: 10),
       ],
+    );
+  }
+}
+
+class Shimmer_loading extends StatelessWidget {
+  const Shimmer_loading({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      period: const Duration(milliseconds: 1500),
+      direction: ShimmerDirection.ltr,
+      // int loop = 0,
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 40.0,
+                color: Colors.white,
+              ),
+              SizedBox(height: 20.0),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: 20.0,
+                color: Colors.white,
+              ),
+              SizedBox(height: 10.0),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.7,
+                height: 20.0,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class RatingContainer extends StatelessWidget {
+  final double rating;
+  final double minRating;
+  final VoidCallback onTap;
+
+  const RatingContainer({
+    required this.rating,
+    required this.minRating,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 35,
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: minRating == rating ? Colors.black : Colors.grey,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          color: minRating == rating ? Colors.black : Colors.white,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(width: 4),
+            Icon(
+              Icons.star,
+              size: 18,
+              color: minRating == rating ? Colors.white : Colors.black,
+            ),
+            SizedBox(width: 4),
+            Text(
+              '$rating',
+              style: TextStyle(
+                color: minRating == rating ? Colors.white : Colors.black,
+              ),
+            ),
+            SizedBox(width: 4),
+          ],
+        ),
+      ),
     );
   }
 }

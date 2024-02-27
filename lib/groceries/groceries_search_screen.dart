@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:uber_eats/groceries/groceries_items_screen.dart';
-import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uber_eats/dash_screen.dart';
 
 class groceries_search_screen extends StatefulWidget {
@@ -49,10 +48,7 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
                     children: [
                       IconButton(
                         onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const MyHomePage()));
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 0)));
                         },
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,

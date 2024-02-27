@@ -124,8 +124,6 @@ class _Groceries_upi_paymentState extends State<Groceries_upi_payment> {
                 }
 
                 if (snapshot.data != null) {
-                  UpiResponse upiResponse = snapshot.data!;
-                  String status = upiResponse.status ?? 'N/A';
                   // Handle transaction status here.
                 }
               } else {

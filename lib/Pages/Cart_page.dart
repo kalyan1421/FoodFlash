@@ -62,7 +62,7 @@ class _CartScreenState extends State<CartScreen> {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      Food_cart_Screen(),
+                      Food_Cart_screen(),
                       GroceriesCartScreen(),
                     ],
                   ),

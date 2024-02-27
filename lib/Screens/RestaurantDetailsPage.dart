@@ -1,11 +1,12 @@
-// ignore_for_file: file_names, camel_case_types, library_private_types_in_public_api, use_build_context_synchronously, avoid_print
+// ignore_for_file: file_names, camel_case_types, library_private_types_in_public_api, use_build_context_synchronously, avoid_print, unused_field
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:uber_eats/Pages/Cart_page.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:uber_eats/Screens/cart_screen.dart';
 import 'package:uber_eats/Utils/utils.dart';
 
 class RestaurantDetailsPage extends StatefulWidget {
@@ -20,13 +21,77 @@ class RestaurantDetailsPage extends StatefulWidget {
 class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
+  late String latitude;
+  late String longitude;
+  bool _isVegOnly = false;
+  bool _isNonVegOnly = false;
+  bool _isBestSellerOnly = false;
   User? _user;
+  String distance = '';
+  String duration = '';
+  bool _isMounted = false;
+  bool isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     _user = _auth.currentUser;
+    _isMounted = true;
+    getRestaurantLocation(widget.restaurantId).then((value) {
+      _calculateDistanceAndTime();
+    });
+  }
+
+  void toggleFavorite() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userId = user.uid;
+
+        final restaurantId = widget.restaurantId;
+
+        final favoriteRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('favorites')
+            .doc(restaurantId);
+
+        final isFavorite = await favoriteRef.get();
+
+        if (isFavorite.exists) {
+          // Remove from favorites if already exists
+          await favoriteRef.delete();
+          // setState(() {
+          //   this.isFavorite = false;
+          // });
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Removed from favorites'),
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.red.shade400,
+            behavior: SnackBarBehavior.floating,
+          ));
+        } else {
+          // Add to favorites if not exists
+          await favoriteRef.set({
+            'restaurantId': restaurantId,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+          // setState(() {
+          //   this.isFavorite = true;
+          // });
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Added to favorites'),
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.red.shade400,
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      } else {
+        print('User is not authenticated. Cannot toggle favorite.');
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+    }
   }
 
   Stream<QuerySnapshot> getMenuItemsStream() {
@@ -65,21 +130,93 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
     }
   }
 
+  Future<void> _calculateDistanceAndTime() async {
+    Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    double startLatitude = currentPosition.latitude;
+    double startLongitude = currentPosition.longitude;
+
+    try {
+      double destinationLatitude = double.parse(latitude.trim());
+      double destinationLongitude = double.parse(longitude.trim());
+
+      double distanceInMeters = await Geolocator.distanceBetween(startLatitude,
+          startLongitude, destinationLatitude, destinationLongitude);
+
+      int timeInSeconds = (distanceInMeters / 5).round();
+
+      setState(() {
+        if (distanceInMeters > 1000) {
+          distance = '| ${(distanceInMeters / 1000).toStringAsFixed(2)} Km';
+        } else {
+          distance = '| 1.5 Km';
+        }
+
+        if (timeInSeconds > 1000) {
+          duration = '| ${(timeInSeconds / 60).toStringAsFixed(0)} mins';
+        } else {
+          duration = '| 10 mins';
+        }
+      });
+    } catch (e) {
+      print('Error parsing latitude or longitude: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getRestaurantLocation(
+      String restaurantId) async {
+    try {
+      DocumentSnapshot<Map<String, dynamic>> restaurantSnapshot =
+          await FirebaseFirestore.instance
+              .collection('Restaurants')
+              .doc(restaurantId)
+              .get();
+
+      if (restaurantSnapshot.exists) {
+        Map<String, dynamic> restaurantData = restaurantSnapshot.data()!;
+        setState(() {
+          latitude = restaurantData['latitude'];
+          longitude = restaurantData['longtude'];
+        });
+
+        return {'latitude': latitude, 'longitude': longitude};
+      } else {
+        return {'latitude': null, 'longitude': null};
+      }
+    } catch (e) {
+      print('Error fetching restaurant location: $e');
+      return {'latitude': null, 'longitude': null};
+    }
+  }
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const CartScreen()));
-        },
-        backgroundColor: Colors.amber.shade800,
-        child: const Icon(
-          Icons.shopping_basket_outlined,
-          size: 40,
-        ),
-      ),
-      backgroundColor: Colors.grey.shade200,
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     Navigator.push(context,
+      //         MaterialPageRoute(builder: (context) => const CartScreen()));
+      //   },
+      //   backgroundColor: Colors.amber.shade800,
+      //   child: const Icon(
+      //     Icons.shopping_basket_outlined,
+      //     size: 40,
+      //   ),
+      // ),
+      // bottomNavigationBar: Container(
+      //   width: MediaQuery.of(context).size.width,
+      //   height: 40,
+      //   color: Colors.pink,
+      // ),
+
+      backgroundColor: Colors.white,
       body: StreamBuilder<DocumentSnapshot>(
         stream: firestore
             .collection('Restaurants')
@@ -91,583 +228,954 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
+            return Shimmer_loading();
           }
 
           if (!snapshot.hasData) {
             return const Text('Restaurant data not available');
           }
-
           final restaurantData = snapshot.data!.data() as Map<String, dynamic>;
-          final String restaurantName = restaurantData['name'];
-          final String restaurantImage = restaurantData['imageUrl'];
 
-          return NestedScrollView(
-            headerSliverBuilder:
-                (BuildContext context, bool innerBoxIsScrolled) {
-              return <Widget>[
-                SliverAppBar(
-                  leading: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      size: 30,
-                      color: Colors.black,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  backgroundColor: Colors.white,
-                  elevation: 10,
-                  collapsedHeight: 60,
-                  shadowColor: Colors.grey,
-                  expandedHeight: 250,
-                  floating: false,
-                  pinned: true,
-                  // title: Text('${restaurantName} '),
-                  flexibleSpace:
-                      // color: Colors.black,
-                      // child:
-                      FlexibleSpaceBar(
-                    titlePadding: const EdgeInsets.symmetric(horizontal: 0),
-                    title: Text(
-                      restaurantName,
-                      style: const TextStyle(fontSize: 24, color: Colors.white),
-                    ),
-                    centerTitle: true,
-                    background: Image.network(
-                      restaurantImage,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                )
-              ];
-            },
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                          bottomRight: Radius.circular(15),
-                          bottomLeft: Radius.circular(15)),
-                      color: Colors.grey.shade300,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 20),
-                      child: Container(
-                        width: MediaQuery.of(context).size.width,
-                        height: 100,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: Colors.white,
+          return Stack(children: [
+            NestedScrollView(
+              headerSliverBuilder:
+                  (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverAppBar(
+                    leading: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Ionicons.arrow_back,
+                            color: Colors.black,
+                            weight: 100,
+                            size: 20,
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                const SizedBox(width: 10),
-                                const Icon(
-                                  Icons.stars,
-                                  color: Colors.green,
-                                ),
-                                Text(
-                                  "${restaurantData['rating']} (14K+ rating)",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18),
-                                ),
-                                const SizedBox(width: 5),
-                                const Icon(
-                                  Ionicons.alert_circle_outline,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  "₹200 for two",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18),
-                                )
-                              ],
+                      ),
+                    ),
+                    actions: [
+                      InkWell(
+                        onTap: () {
+                          toggleFavorite();
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle, color: Colors.white),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(_user!.uid)
+                                  .collection('favorites')
+                                  .doc(restaurantData['restaurantId'])
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.favorite_border_sharp,
+                                      size: 22,
+                                      color: Colors.black,
+                                    ),
+                                  );
+                                } else {
+                                  if (snapshot.hasError) {
+                                    return Text('Error: ${snapshot.error}');
+                                  } else {
+                                    final existingCartItem = snapshot.data;
+                                    final isItemInDB =
+                                        existingCartItem?.exists ?? false;
+
+                                    return isItemInDB
+                                        ? Icon(
+                                            Icons.favorite,
+                                            size: 22,
+                                            color: Colors.red,
+                                          )
+                                        : Icon(
+                                            Icons.favorite_border_sharp,
+                                            size: 22,
+                                            color: Colors.black,
+                                          );
+                                  }
+                                }
+                              },
                             ),
-                            const SizedBox(height: 10),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Divider(
-                                thickness: 2,
-                                height: 3,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      InkWell(
+                        onTap: () {},
+                        child: Container(
+                          width: 45,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Ionicons.search_outline,
+                            color: Colors.black,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 5)
+                    ],
+                    backgroundColor: Colors.white,
+                    // elevation: 10,
+                    collapsedHeight: 60,
+                    expandedHeight: 250,
+                    floating: false,
+                    pinned: true,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Image.network(
+                        restaurantData['imageUrl'],
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                ];
+              },
+              body: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            restaurantData['name'],
+                            style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.1,
+                                color: Colors.black,
+                                fontFamily: "Quicksand",
+                                fontWeight: FontWeight.w900),
+                          ),
+                          SizedBox(height: 2),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "${restaurantData['subtitle'].split(' ').join(' | ')}",
+                                style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.042,
+                                    color: Colors.black,
+                                    fontFamily: "Quicksand",
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                "⭐ ${restaurantData['rating']} (15.1k Rating)",
+                                style: TextStyle(
+                                    letterSpacing: 0,
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.038,
+                                    color: Colors.black,
+                                    fontFamily: "Quicksand",
+                                    fontWeight: FontWeight.w600),
+                              )
+                            ],
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            "${restaurantData['address']}  $distance  $duration",
+                            style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.035,
+                                color: Colors.grey.shade600,
+                                fontFamily: "Quicksand",
+                                fontWeight: FontWeight.w500),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Divider(thickness: 0.5),
+                      SizedBox(height: 20),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                _showFilter();
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                // width: 80,
+                                decoration: BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                          offset: Offset(1, 2),
+                                          spreadRadius: 1,
+                                          blurRadius: 1,
+                                          color: Colors.grey.shade100),
+                                      BoxShadow(
+                                          offset: Offset(2, 0),
+                                          spreadRadius: 1,
+                                          blurRadius: 1,
+                                          color: Colors.grey.shade100)
+                                    ],
+                                    color: Colors.white,
+                                    border: Border.all(
+                                        width: 1, color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(10)),
+                                height: 40,
+                                child: Row(
+                                  children: [
+                                    SizedBox(width: 3),
+                                    Icon(Ionicons.options_outline),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Filter',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w800),
+                                    ),
+                                    SizedBox(width: 3),
+                                    Icon(
+                                      Ionicons.caret_down_outline,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 5)
+                                  ],
+                                ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
+                            SizedBox(width: 10),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _isVegOnly = !_isVegOnly;
+                                  _isNonVegOnly = false;
+                                });
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                // width: 80,
+                                height: 40,
+                                child: Row(
+                                  children: [
+                                    SizedBox(width: 5),
+                                    Container(
+                                      alignment: Alignment.center,
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                          border: Border.all(
+                                              width: 3, color: Colors.green),
+                                          // color: _isVegOnly
+                                          // ? Colors.green
+                                          // : Colors.grey),
+                                          color: Colors.transparent),
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.green),
+                                        // color: _isVegOnly
+                                        //     ? Colors.green
+                                        //     : Colors.grey),
+                                      ),
+                                    ),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Only Veg',
+                                      style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.035,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w800),
+                                    ),
+                                    SizedBox(width: 3),
+                                    _isVegOnly
+                                        ? Icon(
+                                            Ionicons.close,
+                                            size: 20,
+                                          )
+                                        : SizedBox(width: 5),
+                                    SizedBox(width: 5)
+                                  ],
+                                ),
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                        offset: Offset(1, 2),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100),
+                                    BoxShadow(
+                                        offset: Offset(2, 0),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100)
+                                  ],
+                                  border: Border.all(
+                                    width: 1,
+                                    color: _isVegOnly
+                                        ? Colors.pink.shade200
+                                        : Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: _isVegOnly
+                                      ? Colors.pink.shade200.withOpacity(0.2)
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _isNonVegOnly = !_isNonVegOnly;
+                                  _isVegOnly = false;
+                                });
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                // width: 80,
+                                height: 40,
+                                child: Row(
+                                  children: [
+                                    SizedBox(width: 5),
+                                    Container(
+                                      alignment: Alignment.center,
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                          border: Border.all(
+                                              width: 3, color: Colors.red),
+                                          // color: _isVegOnly
+                                          // ? Colors.green
+                                          // : Colors.grey),
+                                          color: Colors.transparent),
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.red),
+                                        // color: _isVegOnly
+                                        //     ? Colors.green
+                                        //     : Colors.grey),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      'Non Veg',
+                                      style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.035,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w800),
+                                    ),
+                                    SizedBox(width: 3),
+                                    _isNonVegOnly
+                                        ? Icon(
+                                            Ionicons.close,
+                                            size: 20,
+                                          )
+                                        : SizedBox(width: 5),
+                                    SizedBox(width: 5)
+                                  ],
+                                ),
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                        offset: Offset(1, 2),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100),
+                                    BoxShadow(
+                                        offset: Offset(2, 0),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100)
+                                  ],
+                                  border: Border.all(
+                                    width: 1,
+                                    color: _isNonVegOnly
+                                        ? Colors.pink.shade200
+                                        : Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: _isNonVegOnly
+                                      ? Colors.pink.shade200.withOpacity(0.2)
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Container(
+                              alignment: Alignment.center,
+                              // width: 80,
+                              height: 35,
+                              child: Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        "Outlet",
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(
-                                        width: 20,
-                                      ),
-                                      Text(
-                                        capitalize(restaurantData['address']),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.orange,
-                                      )
-                                    ],
+                                  SizedBox(width: 5),
+                                  Icon(
+                                    Ionicons.star,
+                                    size: 20,
+                                    color: Colors.amber.shade600,
                                   ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "${restaurantData["time"]} mins",
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(width: 20),
-                                      const Location(),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.orange,
-                                      )
-                                    ],
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Bestseller',
+                                    style: TextStyle(
+                                        fontSize:
+                                            MediaQuery.of(context).size.width *
+                                                0.035,
+                                        color: Colors.black,
+                                        fontFamily: "Quicksand",
+                                        fontWeight: FontWeight.w800),
                                   ),
+                                  SizedBox(width: 5)
                                 ],
                               ),
+                              decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                        offset: Offset(1, 2),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100),
+                                    BoxShadow(
+                                        offset: Offset(2, 0),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        color: Colors.grey.shade100)
+                                  ],
+                                  color: Colors.white,
+                                  border: Border.all(
+                                      width: 1, color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Divider(
-                                thickness: 2,
-                                height: 3,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                const SizedBox(width: 10),
-                                Container(
-                                  decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          width: 1,
-                                          color: Colors.grey.shade900)),
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.delivery_dining,
-                                    color: Colors.amber,
-                                    size: 25,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                const Text(
-                                  "5.5 km",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 2,
-                                  height: 18,
-                                  decoration:
-                                      const BoxDecoration(color: Colors.grey),
-                                ),
-                                const SizedBox(width: 5),
-                                const Text("Free Delivery on your order"),
-                                const Expanded(child: SizedBox())
-                              ],
-                            ),
+                            SizedBox(width: 10),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          border: Border.all(width: 3, color: Colors.grey),
-                          borderRadius: BorderRadius.circular(20)),
-                      width: MediaQuery.of(context).size.width,
-                      height: 80,
-                      child: Row(
-                        // crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Image.asset("assets/utiles/Offers-1.png"),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            verticalDirection: VerticalDirection.down,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                      SizedBox(height: 20),
+                      Text(
+                        "Most Popular",
+                        style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.07,
+                            color: Colors.black,
+                            fontFamily: "Quicksand",
+                            letterSpacing: 1,
+                            fontWeight: FontWeight.w900),
+                      ),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: getMenuItemsStream(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          }
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Shimmer_loading();
+                          }
+                          if (!snapshot.hasData ||
+                              snapshot.data!.docs.isEmpty) {
+                            return const Text(
+                                'No items found for this restaurant');
+                          }
+                          final itemDocs = snapshot.data!.docs;
+                          List<Map<String, dynamic>> itemDataList = itemDocs
+                              .map((doc) => doc.data() as Map<String, dynamic>)
+                              .toList();
+                          // Apply filters
+                          List<Map<String, dynamic>> filteredItemDataList =
+                              itemDataList;
+                          if (_isVegOnly) {
+                            filteredItemDataList = filteredItemDataList
+                                .where(
+                                    (itemData) => itemData['vegornon'] == 'veg')
+                                .toList();
+                          }
+                          if (_isNonVegOnly) {
+                            filteredItemDataList = filteredItemDataList
+                                .where(
+                                    (itemData) => itemData['vegornon'] == 'non')
+                                .toList();
+                          }
+                          return Column(
                             children: [
-                              const Text("50% off upto ₹100",
-                                  style: TextStyle(
-                                      letterSpacing: 1,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 24)),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "USE WELCOME50 ",
-                                    style: TextStyle(
-                                        letterSpacing: 1,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14),
-                                  ),
-                                  Container(
-                                    width: 2,
-                                    height: 18,
-                                    decoration:
-                                        const BoxDecoration(color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  const Text(
-                                    "ABOVE ₹149",
-                                    style: TextStyle(
-                                        letterSpacing: 1,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14),
-                                  )
-                                ],
+                              ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: filteredItemDataList.length,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  final itemData = filteredItemDataList[index];
+                                  return Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ItemsCard(
+                                        restaurantName: restaurantData['name'],
+                                        itemData: itemData,
+                                        restaurantloaction:
+                                            restaurantData["address"],
+                                        restaurantlatitude:
+                                            restaurantData["latitude"],
+                                        restaurantlongtude:
+                                            restaurantData["longtude"],
+                                        onAddToCart: () {
+                                          addToCart(itemData);
+                                        },
+                                      ),
+                                      Divider(thickness: 0.5),
+                                      // SizedBox(height: 25)
+                                    ],
+                                  );
+                                },
                               ),
                             ],
-                          ),
-                          const Expanded(child: SizedBox())
-                        ],
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width / 6,
-                        height: 1,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text(
-                          "MENU",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 18,
-                              letterSpacing: 2),
-                        ),
-                      ),
-                      Container(
-                        width: MediaQuery.of(context).size.width / 6,
-                        height: 1,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.grey,
-                        ),
-                      ),
+                      const SizedBox(height: 30),
+                      Align(
+                          alignment: Alignment.center,
+                          child: Text("You reached at last")),
                     ],
                   ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 10),
-                        InkWell(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(  elevation: 0,
-                                content: Card(
-                               
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5)),
-                                 
-                                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                                  elevation: 1,
-                                  child: Container(
-                                 
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    child: Row(
-                                      children: [
-                                   
-                                        const SizedBox(width: 5),
-                                        const Expanded(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[Text("Pressed")],
-                                          ),
-                                        ),
-                                       
-                                        Container(
-                                            color: Colors.grey,
-                                            height: 35,
-                                            width: 1,
-                                            margin: const EdgeInsets.symmetric(
-                                                horizontal: 5)),
-                                        SnackBarAction(
-                                          label: "UNDO",
-                                          textColor: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          onPressed: () {},
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                               
-                                backgroundColor: Colors.transparent,
-                          
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: Colors.grey.shade300, width: 2),
-                              color: Colors.white,
-                            ),
-                            width: 110,
-                            height: 35,
-                            child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.sort_sharp),
-                                  SizedBox(
-                                    width: 3,
-                                  ),
-                                  Text(
-                                    "Bestseller",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15),
-                                  ),
-                                  SizedBox(
-                                    width: 3,
-                                  ),
-                                ]),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.grey.shade300, width: 2),
-                            color: Colors.white,
-                          ),
-                          width: 100,
-                          height: 35,
-                          child: const Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                ),
+              ),
+            ),
+            Positioned(
+                bottom: 10,
+                right: 10,
+                left: 10,
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(_user!.uid)
+                      .collection('cart')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Shimmer.fromColors(
+                        period: const Duration(milliseconds: 1500),
+                        direction: ShimmerDirection.ltr,
+                        // int loop = 0,
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.star_purple500_rounded,
-                                  color: Colors.amber,
+                                Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.8,
+                                  height: 40.0,
+                                  color: Colors.white,
                                 ),
-                                Text(
-                                  "Top rated",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15),
+                                SizedBox(height: 20.0),
+                                Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.6,
+                                  height: 20.0,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(height: 10.0),
+                                Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.7,
+                                  height: 20.0,
+                                  color: Colors.white,
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.grey.shade300, width: 2),
-                            color: Colors.white,
-                          ),
-                          width: 100,
-                          height: 40,
-                          child: const Center(
-                            child: Text(
-                              "Great Offers",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: Colors.grey.shade300, width: 2),
-                              color: Colors.white,
-                            ),
-                            width: 100,
-                            height: 40,
-                            child: const Center(
+                      );
+                    } else {
+                      int itemCount = snapshot.data?.docs.length ?? 0;
+                      return Visibility(
+                        visible: itemCount > 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Cart_screen(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(5)),
+                              height: 55,
+                              width: MediaQuery.of(context).size.width,
+                              padding: EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                "Rating 4.0+",
+                                'View Cart (${itemCount} items)',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 15),
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 10,
+                      );
+                    }
+                  },
+                ))
+          ]);
+        },
+      ),
+    );
+  }
+
+  void _showFilter() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        bool isVegChecked = false;
+        bool isNonVegChecked = true; // Default value
+        double minRating = 4.0; // Default value
+        List<String> deliveryTimes = [];
+        List<String> priceRanges = [];
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Container(
+              padding: EdgeInsets.all(10),
+              // height: MediaQuery.of(context).size.height * 0.9,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Sort & Filter',
+                          style: TextStyle(
+                              fontSize:
+                                  MediaQuery.of(context).size.width * 0.08,
+                              color: Colors.black,
+                              fontFamily: "MonaSans",
+                              fontWeight: FontWeight.w900),
                         ),
                         InkWell(
-                          onTap: () {},
-                          splashColor: Colors.amber,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: Colors.grey.shade300, width: 2),
-                              color: Colors.white,
-                            ),
-                            width: 150,
-                            height: 40,
-                            child: const Center(
-                              child: Text(
-                                "Previously Ordered",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 15),
-                              ),
-                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Icon(
+                              color: Colors.black,
+                              Ionicons.close,
+                              size: 25,
+                            ))
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Veg/Non-veg',
+                      style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.042,
+                          color: Colors.black,
+                          fontFamily: "MonaSans",
+                          fontWeight: FontWeight.w800),
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: isVegChecked,
+                          activeColor: Colors.black,
+                          onChanged: (newValue) {
+                            setState(() {
+                              isVegChecked = newValue!;
+                              if (newValue) {
+                                isNonVegChecked = false;
+                              }
+                            });
+                          },
+                        ),
+                        Text(
+                          'Pure veg',
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.04,
+                            color: Colors.grey.shade600,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(
-                          width: 10,
+                        SizedBox(width: 10),
+                        Checkbox(
+                          value: isNonVegChecked,
+                          activeColor: Colors.black,
+                          onChanged: (newValue) {
+                            setState(() {
+                              isNonVegChecked = newValue!;
+                              if (newValue) {
+                                isVegChecked = false;
+                              }
+                            });
+                          },
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.grey.shade300, width: 2),
-                            color: Colors.white,
-                          ),
-                          width: 80,
-                          height: 40,
-                          child: const Center(
-                            child: Text(
-                              "Pure Veg",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15),
-                            ),
+                        Text(
+                          'Non Veg',
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.04,
+                            color: Colors.grey.shade600,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(
+                      ],
+                    ),
+                    SizedBox(height: 15),
+                    Divider(
+                      thickness: 1,
+                      color: Colors.grey.shade300,
+                    ),
+                    SizedBox(height: 15),
+                    Text(
+                      'Rating',
+                      style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.042,
+                          color: Colors.black,
+                          fontFamily: "MonaSans",
+                          fontWeight: FontWeight.w800),
+                    ),
+                    SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RatingContainer(
+                          rating: 3.5,
+                          minRating: minRating,
+                          onTap: () {
+                            setState(() {
+                              minRating = 3.5;
+                            });
+                          },
+                        ),
+                        RatingContainer(
+                          rating: 4.0,
+                          minRating: minRating,
+                          onTap: () {
+                            setState(() {
+                              minRating = 4.0;
+                            });
+                          },
+                        ),
+                        RatingContainer(
+                          rating: 4.5,
+                          minRating: minRating,
+                          onTap: () {
+                            setState(() {
+                              minRating = 4.5;
+                            });
+                          },
+                        ),
+                        RatingContainer(
+                          rating: 5.0,
+                          minRating: minRating,
+                          onTap: () {
+                            setState(() {
+                              minRating = 5.0;
+                            });
+                          },
+                        ),
+                        SizedBox(
                           width: 10,
                         )
                       ],
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: Text(
-                      "Recommeneded",
-                      style: TextStyle(
-                          letterSpacing: 1,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20),
+                    SizedBox(height: 25),
+                    Divider(
+                      thickness: 1,
+                      color: Colors.grey.shade300,
                     ),
-                  ),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: getMenuItemsStream(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      }
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Text('No items found for this restaurant');
-                      }
-
-                      final itemDocs = snapshot.data!.docs;
-                      final List<Map<String, dynamic>> itemDataList = itemDocs
-                          .map(
-                            (doc) => doc.data() as Map<String, dynamic>,
-                          )
-                          .toList();
-
-                      return Column(
-                        children: [
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: itemDataList.length,
-                            physics:
-                                const NeverScrollableScrollPhysics(), // Disable scrolling in the ListView
-                            itemBuilder: (context, index) {
-                              final itemData = itemDataList[index];
-                              return ItemsCard(
-                                  itemData: itemData,
-                                  onAddToCart: () {
-                                    addToCart(itemData);
-                                  });
-                            },
+                    SizedBox(height: 20),
+                    Text(
+                      'Delivery Time',
+                      style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.042,
+                          color: Colors.black,
+                          fontFamily: "MonaSans",
+                          fontWeight: FontWeight.w800),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: deliveryTimes.contains('<30'),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked != null && checked) {
+                                deliveryTimes.add('<30');
+                              } else {
+                                deliveryTimes.remove('<30');
+                              }
+                            });
+                          },
+                        ),
+                        Text(
+                          "Less than 30 mins",
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.035,
+                            color: Colors.grey.shade600,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(
-                    height: 50,
-                  )
-                ],
+                        ),
+                        Checkbox(
+                          value: deliveryTimes.contains('<45'),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked != null && checked) {
+                                deliveryTimes.add('<45');
+                              } else {
+                                deliveryTimes.remove('<45');
+                              }
+                            });
+                          },
+                        ),
+                        Text(
+                          "Less than 45 mins",
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.035,
+                            color: Colors.grey.shade600,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: deliveryTimes.contains('<60'),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked != null && checked) {
+                                deliveryTimes.add('<60');
+                              } else {
+                                deliveryTimes.remove('<60');
+                              }
+                            });
+                          },
+                        ),
+                        Text(
+                          'Less than 1 hour',
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.035,
+                            color: Colors.grey.shade600,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 40),
+                    InkWell(
+                      onTap: () {},
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: MediaQuery.of(context).size.width,
+                        height: 50,
+                        decoration: BoxDecoration(
+                            color: Colors.black87,
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Text(
+                          "Apply",
+                          style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontFamily: "Quicksand-Bold",
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          isVegChecked = false;
+                          isNonVegChecked = false;
+                          minRating = 0.0;
+                          deliveryTimes.clear();
+                          priceRanges.clear();
+                        });
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        width: MediaQuery.of(context).size.width,
+                        height: 50,
+                        decoration: BoxDecoration(
+                            // color: Colors.white,
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Text(
+                          "Clear all filter",
+                          style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black,
+                              fontFamily: "Quicksand-Bold",
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -676,7 +1184,20 @@ class ItemsCard extends StatefulWidget {
   final Map<String, dynamic> itemData;
   final VoidCallback onAddToCart;
 
-  const ItemsCard({Key? key, required this.itemData, required this.onAddToCart})
+  final String restaurantName;
+  final String restaurantloaction;
+
+  final String restaurantlatitude;
+  final String restaurantlongtude;
+
+  const ItemsCard(
+      {Key? key,
+      required this.itemData,
+      required this.onAddToCart,
+      required this.restaurantName,
+      required this.restaurantloaction,
+      required this.restaurantlatitude,
+      required this.restaurantlongtude})
       : super(key: key);
 
   @override
@@ -684,15 +1205,15 @@ class ItemsCard extends StatefulWidget {
 }
 
 class _ItemsCardState extends State<ItemsCard> {
-  final Random _random = Random();
-  int _randomNumber = 0;
   int _quantity = 1;
 
-  void _generateRandomNumber() {
-    setState(() {
-      _randomNumber = _random.nextInt(900) + 100;
-    });
-  }
+  bool _isSpicySelected = false;
+  bool _isClassicSelected = false;
+  bool _needCutlery = false;
+  bool _isKebabSelected = false;
+  bool _isCokeSelected = false;
+  bool _isSweetSelected = false;
+  // bool isItemInDB = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -702,7 +1223,6 @@ class _ItemsCardState extends State<ItemsCard> {
   void initState() {
     super.initState();
     _user = _auth.currentUser;
-    _generateRandomNumber();
   }
 
   Future<void> addToCart(int quantityChange) async {
@@ -714,9 +1234,11 @@ class _ItemsCardState extends State<ItemsCard> {
             .collection('cart')
             .doc(widget.itemData['itemId'])
             .get();
-
+        double totalItemPrice = widget.itemData['price'];
+        if (_isKebabSelected) totalItemPrice += 120;
+        if (_isCokeSelected) totalItemPrice += 40;
+        if (_isSweetSelected) totalItemPrice += 60;
         if (existingCartItem.exists) {
-          // If the item is already in the cart, update the quantity
           final currentQuantity = existingCartItem.data()!['quantity'] ?? 0;
           await FirebaseFirestore.instance
               .collection('users')
@@ -725,12 +1247,18 @@ class _ItemsCardState extends State<ItemsCard> {
               .doc(widget.itemData['itemId'])
               .update({
             'quantity': currentQuantity + quantityChange,
+            'totalPrice': totalItemPrice * (currentQuantity + quantityChange),
+            'isKebabSelected': _isKebabSelected,
+            'isCokeSelected': _isCokeSelected,
+            'isSweetSelected': _isSweetSelected,
+            "Restauranname": widget.restaurantName
           });
-          setState(() {
-            _quantity = currentQuantity + quantityChange;
-          });
+          if (mounted) {
+            setState(() {
+              _quantity = currentQuantity + quantityChange;
+            });
+          }
         } else {
-          // If the item is not in the cart, add it with the quantity
           await FirebaseFirestore.instance
               .collection('users')
               .doc(_user!.uid)
@@ -741,12 +1269,24 @@ class _ItemsCardState extends State<ItemsCard> {
             'itemimage': widget.itemData['itemImageUrl'],
             'itemname': widget.itemData['name'],
             'itemprice': widget.itemData['price'],
-            'quantity': quantityChange, // Set the initial quantity
+            'quantity': quantityChange,
             'timestamp': FieldValue.serverTimestamp(),
+            'totalPrice': totalItemPrice * quantityChange,
+            'isKebabSelected': _isKebabSelected,
+            'isCokeSelected': _isCokeSelected,
+            'isSweetSelected': _isSweetSelected,
+            'vegnon': widget.itemData['vegornon'],
+            "Restauranname": widget.restaurantName,
+            "restaurantloaction": widget.restaurantloaction,
+            "restaurantlatitude": widget.restaurantlatitude,
+            "restaurantlongtude": widget.restaurantlongtude,
           });
-          setState(() {
-            _quantity = quantityChange; // Update the local quantity
-          });
+          if (mounted) {
+            setState(() {
+              _quantity = quantityChange;
+              // isItemInDB = false;
+            });
+          }
         }
 
         print('Item added to cart successfully!');
@@ -758,187 +1298,603 @@ class _ItemsCardState extends State<ItemsCard> {
     }
   }
 
+  void removeFromCart() {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('cart')
+        .doc(widget.itemData['itemId'])
+        .delete()
+        .then((value) {
+      print('Item removed from cart successfully');
+    }).catchError((error) {
+      print('Failed to remove item from cart: $error');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final itemName = widget.itemData['name'];
-    final itemPrice = widget.itemData['price'];
-    final itemDescription = widget.itemData['description'];
-    final itemRating = widget.itemData['rating'];
+    void _showItemDetails() {
+      bool isSpicy = false;
+      bool isClassic = false;
+      bool addKebab = false;
+      bool addCoke = false;
+      // bool addons1 = false;
+      // bool addons2 = false;
+      // bool addons3 = false;
+      // bool addons4 = false;
+      // bool needCutlery = false;
 
-    final itemimage = widget.itemData['itemImageUrl'];
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      shadowColor: Colors.grey,
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 200,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 20,
-              top: 5,
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      children: [
-                        const Center(
-                            child: Icon(Icons.arrow_drop_down_outlined)),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Container(
-                          alignment: Alignment.center,
-                          width: 40,
-                          height: 20,
-                          decoration: BoxDecoration(
-                              color: Colors.amber.shade800,
-                              borderRadius: BorderRadius.circular(5)),
-                          child: const Text(
-                            "Bestseller",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      capitalize(itemName),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 24),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          color: Colors.amber.shade100.withOpacity(0.7),
-                          child: RatingBar.builder(
-                            initialRating: itemRating.toDouble(),
-                            minRating: 1,
-                            direction: Axis.horizontal,
-                            allowHalfRating: true,
-                            itemCount: 5,
-                            itemSize: 20,
-                            itemPadding:
-                                const EdgeInsets.symmetric(horizontal: 1.0),
-                            itemBuilder: (context, _) => const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                            ),
-                            onRatingUpdate: (rating) {
-                              // Handle rating updates if needed
-                            },
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        Text("$_randomNumber rating"),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      "₹$itemPrice",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      itemDescription,
-                      style: const TextStyle(fontSize: 14),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(
-              width: 50,
-            ),
-            Positioned(
-              right: 10,
-              top: 20,
-              child: Container(
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  // image: DecorationImage(
-                  //     image: NetworkImage(itemimage), fit: BoxFit.cover),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
                 ),
-                width: 150,
-                height: 160,
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        image: DecorationImage(
-                            image: NetworkImage(itemimage), fit: BoxFit.cover),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.pink.shade100.withOpacity(0.8),
-                            border: Border.all(
-                                width: 2, color: Colors.pink.shade400),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(10))),
-                        width: 150,
-                        height: 40,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: () {
-                                // Decrease the quantity by 1
-                                if (_quantity > 1) {
-                                  addToCart(-1);
-                                }
-                                showCustomSnackBar(
-                                    context, "Item remove to cart");
+                height: MediaQuery.of(context).size.height * 0.9,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                              ),
+                              color: Colors.white,
+                              image: DecorationImage(
+                                fit: BoxFit.fill,
+                                image: NetworkImage(
+                                    widget.itemData["itemImageUrl"]),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 10,
+                            top: 10,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
                               },
+                              child: Container(
+                                width: 45,
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Ionicons.close_outline,
+                                  color: Colors.black,
+                                  size: 30,
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 10.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              capitalize(widget.itemData['name']),
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.06,
+                                color: Colors.black,
+                                fontFamily: "MonaSans",
+                                letterSpacing: 1,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             Text(
-                              _quantity.toString(),
+                              "₹ ${widget.itemData['price']}",
                               style: TextStyle(
-                                  color: Colors.pink.shade400, fontSize: 18),
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.045,
+                                color: Colors.black,
+                                fontFamily: "MonaSans",
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () {
-                                showCustomSnackBar(
-                                    context, "Item added to cart");
+                            SizedBox(height: 5.0),
+                            Text(
+                              widget.itemData['description'],
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.035,
+                                color: Colors.grey.shade500,
+                                fontFamily: "Quicksand",
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Divider(thickness: 1),
+                            SizedBox(height: 10),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Choice of Preparation",
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.black,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      Text(
+                                        "✔️ Required",
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.green,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Container(
+                                          alignment: Alignment.center,
+                                          width: 18,
+                                          height: 18,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                              border: Border.all(
+                                                  width: 2,
+                                                  color: Colors.green),
+                                              color: Colors.transparent),
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.green),
+                                          )),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Spicy',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.grey.shade500,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Expanded(child: SizedBox()),
+                                      Checkbox(
+                                        activeColor: Colors.black,
+                                        value: isSpicy,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            isSpicy = value!;
+                                            if (isSpicy && isClassic) {
+                                              isClassic = false;
+                                              _isSpicySelected = false;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                          alignment: Alignment.center,
+                                          width: 18,
+                                          height: 18,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                              border: Border.all(
+                                                  width: 2,
+                                                  color: Colors.green),
+                                              color: Colors.transparent),
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.green),
+                                          )),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Classic',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.grey.shade500,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Expanded(child: SizedBox()),
+                                      Checkbox(
+                                        activeColor: Colors.black,
+                                        value: isClassic,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            isClassic = value!;
+                                            if (isClassic && isSpicy) {
+                                              // If both spicy and classic are selected,
+                                              // unselect spicy
+                                              isSpicy = false;
+                                              _isSpicySelected = false;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    "Extra Add-ons",
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                              0.04,
+                                      color: Colors.black,
+                                      fontFamily: "MonaSans",
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Container(
+                                          alignment: Alignment.center,
+                                          width: 18,
+                                          height: 18,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                              border: Border.all(
+                                                  width: 2, color: Colors.red),
+                                              color: Colors.transparent),
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.red),
+                                          )),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Kebab',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.grey.shade500,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Expanded(child: SizedBox()),
+                                      Text(
+                                        '₹ 120',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.035,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Checkbox(
+                                        activeColor: Colors.black,
+                                        value: addKebab,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            addKebab = value!;
+                                            _isKebabSelected = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                          alignment: Alignment.center,
+                                          width: 18,
+                                          height: 18,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                              border: Border.all(
+                                                  width: 2, color: Colors.red),
+                                              color: Colors.transparent),
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.red),
+                                          )),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'Coke',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.04,
+                                          color: Colors.grey.shade500,
+                                          fontFamily: "MonaSans",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Expanded(child: SizedBox()),
+                                      Text(
+                                        '₹ 40',
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.035,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Checkbox(
+                                        activeColor: Colors.black,
+                                        value: addCoke,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            addCoke = value!;
+                                            _isCokeSelected = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
                                 addToCart(1);
+                                Navigator.pop(context);
                               },
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Add to cart",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.04,
+                                    color: Colors.white,
+                                    fontFamily: "MonaSans",
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                width: MediaQuery.of(context).size.width,
+                                height: 45,
+                                decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    borderRadius: BorderRadius.circular(5)),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              );
+            },
+          );
+        },
+      );
+    }
+
+    final itemName = widget.itemData['name'];
+    final itemPrice = widget.itemData['price'];
+    final itemDescription = widget.itemData['description'];
+    final itemimage = widget.itemData['itemImageUrl'];
+
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.width * 0.4,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: MediaQuery.of(context).size.width * 0.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  capitalize(itemName),
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.042,
+                      color: Colors.black,
+                      fontFamily: "Quicksand",
+                      fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  itemDescription.length > 65
+                      ? '${itemDescription.substring(0, 65)}...'
+                      : itemDescription,
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.033,
+                    color: Colors.grey.shade400,
+                    fontFamily: "Quicksand",
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  "₹ ${itemPrice}",
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.04,
+                      color: Colors.black,
+                      fontFamily: "Quicksand",
+                      fontWeight: FontWeight.w800),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(child: SizedBox()),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            width: MediaQuery.of(context).size.width * 0.35,
+            height: MediaQuery.of(context).size.width * 0.35,
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    image: DecorationImage(
+                        image: NetworkImage(itemimage), fit: BoxFit.cover),
+                  ),
+                ),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(_user!.uid)
+                      .collection('cart')
+                      .doc(widget.itemData['itemId'])
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Shimmer_loading();
+                    } else {
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else {
+                        final existingCartItem = snapshot.data;
+                        final isItemInDB = existingCartItem?.exists ?? false;
+
+                        return isItemInDB
+                            ? Positioned(
+                                right: 10,
+                                bottom: 10,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(25)),
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.25,
+                                  height: 30,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(height: 3),
+                                      InkWell(
+                                        onTap: () {
+                                          if (_quantity > 1) {
+                                            addToCart(-1);
+                                          } else {
+                                            removeFromCart();
+                                          }
+                                          showCustomSnackBar(context,
+                                              "Item removed from cart");
+                                        },
+                                        child: Icon(Icons.remove),
+                                      ),
+                                      Text(
+                                        _quantity.toString(),
+                                        style: TextStyle(
+                                            color: Colors.black, fontSize: 18),
+                                      ),
+                                      InkWell(
+                                        child: const Icon(Icons.add),
+                                        onTap: () {
+                                          showCustomSnackBar(
+                                              context, "Item added to cart");
+                                          addToCart(1);
+                                        },
+                                      ),
+                                      SizedBox(height: 3),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Positioned(
+                                right: 5,
+                                bottom: 5,
+                                child: InkWell(
+                                  onTap: _showItemDetails,
+                                  child: Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      width: 35,
+                                      height: 35,
+                                      decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle),
+                                      child: Icon(
+                                        Icons.add,
+                                        size: 26,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

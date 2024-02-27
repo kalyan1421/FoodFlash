@@ -1,12 +1,12 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print, unused_field, duplicate_ignore, non_constant_identifier_names
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:uber_eats/Auth/UI/Login_UI.dart';
-import 'package:uber_eats/Pages/Dining_page.dart';
+import 'package:uber_eats/Pages/Food_page.dart';
 import 'package:uber_eats/Pages/Home_Page.dart';
 import 'package:uber_eats/Pages/Profile_page.dart';
 import 'package:uber_eats/Pages/Groceries_page.dart';
@@ -14,24 +14,21 @@ import 'package:uber_eats/Provider/user_provider.dart';
 import 'package:uber_eats/Pages/Cart_page.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-
-  // final Cart cart;
-  // const MyHomePage({super.key, required this.cart});
+  int selectindex;
+   MyHomePage({Key? key, required this.selectindex}) : super(key: key);
   @override
-  // ignore: library_private_types_in_public_api
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   Future<void> logout(BuildContext context) async {
     try {
-      await FirebaseAuth.instance.signOut();
+      await FirebaseAuth.instance.signOut().then((value) => 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const login_page(),
+          builder: (context) => login_page(),
         ),
-      );
+      ),);
     } catch (e) {
       print("Error logging out: $e");
     }
@@ -76,10 +73,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _screens = [
     const RestaurantList(),
+    Food_page(),
     const CategoryScreen(),
     const CartScreen(),
     const Profile_Page(),
-    // MapPage()
   ];
 
   @override
@@ -96,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
       //         child: Icon(Icons.shopping_cart),
       //       )
       //     : null,
-      body: _screens[PresentIndex],
+      body: _screens[widget.selectindex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -108,11 +105,11 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Padding(
           padding: const EdgeInsets.all(0),
           child: GNav(
-            selectedIndex: PresentIndex,
+            selectedIndex: widget.selectindex,
             onTabChange: (index) {
               setState(
                 () {
-                  PresentIndex = index;
+                  widget.selectindex = index;
                 },
               );
             },
@@ -128,7 +125,12 @@ class _MyHomePageState extends State<MyHomePage> {
             gap: 10,
             tabs: const [
               GButton(
-                icon: Icons.delivery_dining,
+                icon: Ionicons.home_outline,
+                text: "Home",
+                iconColor: Colors.grey,
+              ),
+              GButton(
+                icon: Ionicons.fast_food_outline,
                 text: "Delivery",
                 iconColor: Colors.grey,
               ),
@@ -138,17 +140,17 @@ class _MyHomePageState extends State<MyHomePage> {
               //   iconColor: Colors.grey,
               // ),
               GButton(
-                icon: Icons.store,
+                icon: Ionicons.storefront_outline,
                 text: "Instamart",
                 iconColor: Colors.grey,
               ),
               GButton(
-                icon: Icons.shopping_bag,
+                icon: Ionicons.bag_outline,
                 text: "Cart",
                 iconColor: Colors.grey,
               ),
               GButton(
-                icon: Icons.person,
+                icon: Ionicons.person_outline,
                 text: "Profile",
                 iconColor: Colors.grey,
               )

@@ -122,7 +122,7 @@ class _GroceriesCartScreenState extends State<GroceriesCartScreen> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        cartItem['itemname']
+                                        cartItem['name']
                                             .split(' ')
                                             .take(3)
                                             .join(' '),
@@ -236,13 +236,7 @@ class _GroceriesCartScreenState extends State<GroceriesCartScreen> {
                                   SizedBox(height: 10),
                                   InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const MyHomePage(),
-                                        ),
-                                      );
+Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 2)));
                                     },
                                     child: Row(
                                       mainAxisAlignment:
