@@ -4,11 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:lottie/lottie.dart';
 import 'package:pinput/pinput.dart';
 import 'package:sign_button/sign_button.dart';
 import 'package:uber_eats/Add_address/pick_address.dart';
-import 'package:uber_eats/Auth/UI/SignUp_UI.dart';
 import 'package:uber_eats/dash_screen.dart';
 
 class login_page extends StatefulWidget {
@@ -105,7 +103,7 @@ class _login_pageState extends State<login_page> {
       if (userExists) {
         print("userExits");
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => MyHomePage(selectindex: 0)));
+            builder: (context) => Dash_board(selectindex: 0)));
         return;
       }
 
@@ -501,7 +499,7 @@ class _OtpVerificationState extends State<OtpVerification> {
           codeVerify = false;
         });
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => MyHomePage(selectindex: 0)));
+            builder: (context) => Dash_board(selectindex: 0)));
         return;
       }
 

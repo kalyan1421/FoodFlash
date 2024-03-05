@@ -51,8 +51,7 @@ class _OrderTrackingState extends State<Order_tracking> {
   location.Location _location = location.Location();
 
   late LatLng bikePosition;
-  final Duration _animationDuration =
-      const Duration(milliseconds: 1000); // Adjust the duration as needed
+  final Duration _animationDuration = const Duration(milliseconds: 1000);
 
   void _toggleMapType() {
     setState(() {
@@ -129,9 +128,11 @@ class _OrderTrackingState extends State<Order_tracking> {
   void _updateMapPosition() async {
     _polyLines.clear();
     await _getRoutePolyline(source!, destination);
-    setState(() {
-      bikePosition = destination;
-    });
+    if (mounted) {
+      setState(() {
+        bikePosition = destination;
+      });
+    }
   }
 
   Future<void> _getRoutePolyline(LatLng start, LatLng finish) async {
@@ -171,9 +172,11 @@ class _OrderTrackingState extends State<Order_tracking> {
       width: 4,
     );
 
-    setState(() {
-      _polyLines.add(polyline);
-    });
+    if (mounted) {
+      setState(() {
+        _polyLines.add(polyline);
+      });
+    }
   }
 
   void _getCurrentLocation() async {
@@ -210,8 +213,7 @@ class _OrderTrackingState extends State<Order_tracking> {
           final orderData = orderDocument.data() as Map<String, dynamic>;
           final items = orderData['items'] as List<dynamic>;
           final totalAmount = orderData['totalAmount'] as double;
-          final timestamp = orderData['timestamp']
-              as Timestamp; // Replace with the correct field name
+          final timestamp = orderData['timestamp'] as Timestamp;
           final dateTime = timestamp.toDate();
           final formattedDateTime = DateFormat.MMMd().add_jm().format(dateTime);
           setState(() {
@@ -909,9 +911,9 @@ class _WidgetGoogleMapState extends State<WidgetGoogleMap> {
   GoogleMapController? mapController;
   LatLng? source;
   LatLng destination =
-      const LatLng(17.4380, 78.3986); // Change to your destination coordinates
+      const LatLng(17.4380, 78.3986); 
 
-  @override
+  @override      
   void initState() {
     super.initState();
     _getCurrentLocation();

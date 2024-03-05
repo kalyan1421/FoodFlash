@@ -13,22 +13,23 @@ import 'package:uber_eats/Pages/Groceries_page.dart';
 import 'package:uber_eats/Provider/user_provider.dart';
 import 'package:uber_eats/Pages/Cart_page.dart';
 
-class MyHomePage extends StatefulWidget {
+class Dash_board extends StatefulWidget {
   int selectindex;
-   MyHomePage({Key? key, required this.selectindex}) : super(key: key);
+  Dash_board({Key? key, required this.selectindex}) : super(key: key);
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _Dash_boardState createState() => _Dash_boardState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _Dash_boardState extends State<Dash_board> {
   Future<void> logout(BuildContext context) async {
     try {
-      await FirebaseAuth.instance.signOut().then((value) => 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => login_page(),
-        ),
-      ),);
+      await FirebaseAuth.instance.signOut().then(
+            (value) => Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => login_page(),
+              ),
+            ),
+          );
     } catch (e) {
       print("Error logging out: $e");
     }

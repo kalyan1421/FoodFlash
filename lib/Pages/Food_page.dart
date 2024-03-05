@@ -5,8 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:lottie/lottie.dart';
+import 'package:uber_eats/Features_Layouts/search_bar.dart';
 import 'package:uber_eats/Screens/RestaurantDetailsPage.dart';
+import 'package:uber_eats/Tracking/order_traking.dart';
 import 'package:uber_eats/Utils/utils.dart';
 import 'package:uber_eats/groceries/groceries_search_screen.dart';
 
@@ -19,12 +23,46 @@ class Food_page extends StatefulWidget {
 
 class _Food_pageState extends State<Food_page> {
   String? formattedAddress;
+  String? ordertime;
   User? user = FirebaseAuth.instance.currentUser;
-
+  List<double> ratings = [];
   @override
   void initState() {
     super.initState();
+    placeOrderAndFetchAddress();
     fetchRecentAddressData();
+  }
+
+  Map<String, dynamic>? _orderData;
+
+  void placeOrderAndFetchAddress() async {
+    String userId = user!.uid;
+    try {
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('orders')
+              .orderBy('timestamp', descending: true)
+              .limit(1)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentSnapshot<Map<String, dynamic>> docSnapshot =
+            querySnapshot.docs.first;
+        Map<String, dynamic> data = docSnapshot.data()!;
+
+        String totalAmount = data['orderId'];
+        setState(() {
+          ordertime = totalAmount;
+        });
+        print(ordertime);
+      } else {
+        print('No documents found in the addresses subcollection');
+      }
+    } catch (e) {
+      print('Error placing order and fetching address: $e');
+    }
   }
 
   void fetchRecentAddressData() async {
@@ -44,7 +82,7 @@ class _Food_pageState extends State<Food_page> {
         DocumentSnapshot<Map<String, dynamic>> docSnapshot =
             querySnapshot.docs.first;
         Map<String, dynamic> data = docSnapshot.data()!;
-        print('Data from document: $data');
+
         if (data.containsKey('formattedAddress')) {
           String fullAddress = data['formattedAddress'];
           String truncatedAddress = fullAddress.substring(0, 20);
@@ -341,6 +379,319 @@ class _Food_pageState extends State<Food_page> {
               ),
             ],
           ),
+          if (ordertime != null && ordertime!.isNotEmpty)
+            Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user!.uid)
+                      .collection('orders')
+                      .orderBy('timestamp', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text('No orders found.'));
+                    }
+                    final order = snapshot.data!.docs.first.data()
+                        as Map<String, dynamic>;
+
+                    // final orderId = order['orderId'];
+                    // final timestamp =
+                    //     (order['timestamp'] as Timestamp).toDate();
+                    // final formattedTimestamp = DateFormat('dd/MM/yyyy, hh:mm a').format(timestamp);
+                    // final transactionId = order['transactionId'];
+                    // final responseCode = order['responseCode'];
+                    // final approvalRefNo = order['approvalRefNo'];
+                    // final totalAmount = order['totalAmount'];
+                    // final deliveryFree = order['DeliveryFree'];
+                    // final payMethod = order['paymethod'];
+                    // final taxAndFee = order['Tax&fee'];
+                    // final discount = order['discount'];
+                    final timestamp =
+                        (order['timestamp'] as Timestamp).toDate();
+                    print(timestamp);
+                    final updatedTimestamp =
+                        timestamp.add(Duration(minutes: 30));
+                    final orderTimestamp =
+                        (order['timestamp'] as Timestamp).toDate();
+                    final formattedTimestamp =
+                        DateFormat('hh:mm a').format(updatedTimestamp);
+                    final now = DateTime.now();
+                    final difference = now.difference(orderTimestamp);
+                    if (difference.inHours < 1) {
+                      // ratings =
+                      //     List<double>.filled(snapshot.data!.docs.length, 0.0);
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border(
+                            top: BorderSide(
+                              color: Colors.grey,
+                              width: 1.0,
+                            ),
+                          ),
+                        ),
+                        height: 60,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Lottie.asset(
+                                "assets/utiles/Animation - 1709184455102.json",
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Picking up your delivery",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                        fontFamily: "Quicksand",
+                                        fontWeight: FontWeight.w900),
+                                  ),
+                                  Text(
+                                    "Arriving at ${formattedTimestamp}",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black45,
+                                        fontFamily: "Quicksand",
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                              Expanded(child: SizedBox()),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Order_tracking(),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 15),
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.green.shade300
+                                            .withOpacity(0.8)),
+                                    // width: 100,
+                                    // height: 40,
+                                    child: Text(
+                                      "Track order",
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.w800),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Center(child: SizedBox());
+                    }
+
+                    // return SizedBox(
+                    //   height: MediaQuery.of(context).size.height - 197,
+                    //   child: ListView.builder(
+                    //     itemCount: snapshot.data!.docs.length,
+                    //     itemBuilder: (context, index) {
+                    //       final orderDocument = snapshot.data!.docs[index];
+                    //       final orderData =
+                    //           orderDocument.data() as Map<String, dynamic>;
+                    //       final orderItems =
+                    //           orderData['items'] as List<dynamic>;
+                    //       ratings = List<double>.filled(
+                    //           snapshot.data!.docs.length, 0.0);
+                    //       return Align(
+                    //         alignment: Alignment.bottomCenter,
+                    //         child: Container(
+                    //           child: Column(
+                    //             children: [
+                    //               SizedBox(height: 5),
+                    //               Padding(
+                    //                 padding: const EdgeInsets.symmetric(
+                    //                     horizontal: 10),
+                    //                 child: Row(
+                    //                   mainAxisAlignment:
+                    //                       MainAxisAlignment.spaceBetween,
+                    //                   crossAxisAlignment:
+                    //                       CrossAxisAlignment.start,
+                    //                   children: [
+                    //                     Container(
+                    //                       width: 100,
+                    //                       height: 100,
+                    //                       decoration: BoxDecoration(
+                    //                         borderRadius:
+                    //                             BorderRadius.circular(15),
+                    //                         image: DecorationImage(
+                    //                           fit: BoxFit.cover,
+                    //                           image: NetworkImage(
+                    //                               "${orderItems[0]['image']}"),
+                    //                         ),
+                    //                       ),
+                    //                     ),
+                    //                     Padding(
+                    //                       padding: const EdgeInsets.symmetric(
+                    //                           horizontal: 5),
+                    //                       child: Column(
+                    //                         mainAxisAlignment:
+                    //                             MainAxisAlignment.start,
+                    //                         crossAxisAlignment:
+                    //                             CrossAxisAlignment.start,
+                    //                         children: [
+                    //                           Text(
+                    //                             "${orderItems[0]['restaurantname']}",
+                    //                             style: TextStyle(
+                    //                                 fontSize:
+                    //                                     MediaQuery.of(context)
+                    //                                             .size
+                    //                                             .height *
+                    //                                         0.022,
+                    //                                 color: Colors.black,
+                    //                                 fontFamily: "Quicksand",
+                    //                                 fontWeight:
+                    //                                     FontWeight.w900),
+                    //                           ),
+                    //                           Text(
+                    //                             "${orderItems[0]['restaurantloaction']}",
+                    //                             style: TextStyle(
+                    //                                 fontSize:
+                    //                                     MediaQuery.of(context)
+                    //                                             .size
+                    //                                             .height *
+                    //                                         0.015,
+                    //                                 color: Colors.grey.shade500,
+                    //                                 fontFamily: "Quicksand",
+                    //                                 fontWeight:
+                    //                                     FontWeight.w500),
+                    //                           ),
+                    //                           Text(
+                    //                             DateFormat(
+                    //                                     'dd/MM/yyyy, hh:mm a')
+                    //                                 .format(orderDocument[
+                    //                                         'timestamp']
+                    //                                     .toDate()),
+                    //                             style: TextStyle(
+                    //                                 fontSize:
+                    //                                     MediaQuery.of(context)
+                    //                                             .size
+                    //                                             .height *
+                    //                                         0.015,
+                    //                                 color: Colors.grey.shade400,
+                    //                                 fontFamily: "Quicksand",
+                    //                                 fontWeight:
+                    //                                     FontWeight.w500),
+                    //                           ),
+                    //                         ],
+                    //                       ),
+                    //                     ),
+                    //                     Expanded(child: SizedBox()),
+                    //                     Padding(
+                    //                       padding: const EdgeInsets.symmetric(
+                    //                           horizontal: 5),
+                    //                       child: Text(
+                    //                         "✔️Delivered",
+                    //                         style: TextStyle(
+                    //                             color: Colors.green.shade300,
+                    //                             fontSize: 14,
+                    //                             fontWeight: FontWeight.bold),
+                    //                       ),
+                    //                     ),
+                    //                   ],
+                    //                 ),
+                    //               ),
+                    //               SizedBox(height: 10),
+                    //               Padding(
+                    //                 padding: const EdgeInsets.symmetric(
+                    //                     horizontal: 10),
+                    //                 child: Row(
+                    //                     // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //                     crossAxisAlignment:
+                    //                         CrossAxisAlignment.start,
+                    //                     children: [
+                    //                       Text(
+                    //                         "₹ ${orderDocument['totalAmount'].toString()} ",
+                    //                         style: TextStyle(
+                    //                             fontSize: MediaQuery.of(context)
+                    //                                     .size
+                    //                                     .height *
+                    //                                 0.016,
+                    //                             color: Colors.grey.shade900,
+                    //                             fontFamily: "Quicksand",
+                    //                             fontWeight: FontWeight.w800),
+                    //                       ),
+                    //                       Text(
+                    //                         '| ${orderItems.length.toString()} items',
+                    //                         style: TextStyle(
+                    //                             fontSize: MediaQuery.of(context)
+                    //                                     .size
+                    //                                     .height *
+                    //                                 0.016,
+                    //                             color: Colors.grey.shade900,
+                    //                             fontFamily: "Quicksand",
+                    //                             fontWeight: FontWeight.w800),
+                    //                       ),
+                    //                       Expanded(child: SizedBox()),
+                    //                       InkWell(
+                    //                         onTap: () {},
+                    //                         child: Text(
+                    //                           'View Details',
+                    //                           style: TextStyle(
+                    //                               fontSize:
+                    //                                   MediaQuery.of(context)
+                    //                                           .size
+                    //                                           .height *
+                    //                                       0.015,
+                    //                               color: Colors.grey.shade800,
+                    //                               fontFamily: "Quicksand",
+                    //                               fontWeight: FontWeight.w900),
+                    //                         ),
+                    //                       ),
+                    //                     ]),
+                    //               ),
+                    //               SizedBox(height: 5),
+                    //               Divider(
+                    //                 thickness: 1.5,
+                    //                 color: Colors.grey.shade300,
+                    //               )
+                    //             ],
+                    //           ),
+                    //         ),
+                    //       );
+                    //     },
+                    //   ),
+                    // );
+
+                    // },
+                    // );
+                  },
+                )),
         ],
       ),
     );
@@ -357,20 +708,6 @@ class TopRatedRes extends StatefulWidget {
 }
 
 class _TopRatedResState extends State<TopRatedRes> {
-  int randomValue = 0;
-  void generateRandomNumber() {
-    final random = Random();
-    int randomNumber;
-
-    do {
-      randomNumber = (random.nextInt(8) + 3) * 10;
-    } while (randomNumber <= 20 || randomNumber > 90);
-
-    setState(() {
-      randomValue = randomNumber;
-    });
-  }
-
   bool isFavorite = false;
   bool ismenuTap = false;
   void toggleFavorite() {
@@ -400,8 +737,7 @@ class _TopRatedResState extends State<TopRatedRes> {
   @override
   void initState() {
     super.initState();
-    _isMounted = true; // Widget is mounted
-    generateRandomNumber();
+    _isMounted = true;
 
     _calculateDistanceAndTime();
   }
@@ -979,7 +1315,7 @@ class _SearchBarState extends State<SearchBar> {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => groceries_search_screen(),
+              builder: (context) => RestaurantSearchScreen(),
             ));
       },
       child: Container(

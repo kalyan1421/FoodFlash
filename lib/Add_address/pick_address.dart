@@ -89,14 +89,19 @@ class _PickLocationState extends State<PickLocation> {
           'phoneNumber': phonenumber,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'phoneNumber': phonenumber,
-        });
+        if (user.phoneNumber == '') {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({
+            'phoneNumber': phonenumber,
+          });
+        } else {
+          print("phone number is exits ");
+        }
 
-       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 0)));
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => Dash_board(selectindex: 0)));
       }
 
       setState(() {

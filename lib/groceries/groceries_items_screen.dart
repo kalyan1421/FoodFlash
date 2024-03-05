@@ -1,10 +1,8 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:uber_eats/Provider/groceries_provider.dart';
+import 'package:ionicons/ionicons.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:uber_eats/Utils/utils.dart';
 import 'package:uber_eats/groceries/groceries_search_screen.dart';
 
@@ -28,7 +26,7 @@ class _groceries_items_screenState extends State<groceries_items_screen> {
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    final double itemHeight = (size.height - kToolbarHeight - 24) / 4.8;
+    final double itemHeight = (size.height - kToolbarHeight - 24) / 4.6;
     final double itemWidth = size.width / 3;
     return Scaffold(
       body: CustomScrollView(
@@ -37,74 +35,58 @@ class _groceries_items_screenState extends State<groceries_items_screen> {
             elevation: 0,
             pinned: true,
             floating: true,
-            collapsedHeight: 90,
-            expandedHeight: 90,
+            collapsedHeight: 100,
+            expandedHeight: 100,
             backgroundColor: Colors.white,
             leading: IconButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               icon: Icon(
-                Icons.arrow_back_ios,
-                color: Colors.indigo,
+                Icons.arrow_back,
+                color: Colors.black,
                 size: 30,
               ),
             ),
-            actions: [
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => groceries_search_screen(),
-                    ),
-                  );
-                },
-                child: Image.asset(
-                  "assets/utiles/search_icon.png",
-                  color: Colors.indigo,
-                  scale: 25,
-                ),
-              ),
-              SizedBox(width: 15),
-              Image.asset(
-                "assets/utiles/filter_icon.png",
-                color: Colors.indigo,
-                scale: 20,
-              ),
-              SizedBox(width: 10),
-            ],
             flexibleSpace: Align(
               alignment: Alignment.bottomCenter,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(child: SizedBox(height: 15)),
-                  Text(
-                    textAlign: TextAlign.end,
-                    widget.categoryName,
-                    style: GoogleFonts.lobster(fontSize: 30),
-                  ),
-                  SizedBox(height: 5),
-                ],
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: Text(
+                        widget.categoryName,
+                        style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width * 0.06,
+                            color: Colors.black,
+                            fontFamily: "Quicksand",
+                            fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => groceries_search_screen(),
+                          ),
+                        );
+                      },
+                      child: CircleAvatar(
+                        backgroundColor: Colors.grey.shade200.withOpacity(0.8),
+                        child: Icon(Ionicons.search,
+                            color: Colors.black, size: 25),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          // SliverToBoxAdapter(
-          //   child: Column(
-          //     children: [
-          //       SizedBox(height: 10),
-          //       Center(
-          //         child: Text(
-          //           textAlign: TextAlign.center,
-          //           widget.categoryName,
-          //           style: GoogleFonts.lobster(fontSize: 30),
-          //         ),
-          //       ),
-          //       SizedBox(height: 25),
-          //     ],
-          //   ),
-          // ),
           SliverToBoxAdapter(child: SizedBox(height: 20)),
           StreamBuilder(
             stream: FirebaseFirestore.instance
@@ -114,7 +96,7 @@ class _groceries_items_screenState extends State<groceries_items_screen> {
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
               if (!snapshot.hasData) {
                 return SliverToBoxAdapter(
-                  child: CircularProgressIndicator(),
+                  child: Shimmer_loading(),
                 );
               }
               Map<String, dynamic>? data =
@@ -139,15 +121,8 @@ class _groceries_items_screenState extends State<groceries_items_screen> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       Map<String, dynamic> itemData = itemsData[index];
-                      return ProductCard(
-                        id: itemData['id'],
-                        title: itemData['title'],
-                        image: itemData['image'],
-                        price: itemData['price'].toDouble(),
-                        categoryName: widget.categoryName,
-                        // addToCart: (quantityChange) {
-                        //   addToCart(itemData, quantityChange);
-                        // },
+                      return Product_card(
+                        groceriesData: itemData,
                       );
                     },
                     childCount: itemsData.length,
@@ -162,217 +137,378 @@ class _groceries_items_screenState extends State<groceries_items_screen> {
   }
 }
 
-class ProductCard extends StatefulWidget {
-  final String id;
-  final String title;
-  final String image;
-  final double price;
-  final int initialQuantity;
-  final String categoryName;
+class Product_card extends StatefulWidget {
+  final Map<String, dynamic> groceriesData;
 
-  const ProductCard({
-    Key? key,
-    required this.id,
-    required this.title,
-    required this.image,
-    required this.price,
-    required this.categoryName,
-    this.initialQuantity = 1,
-  }) : super(key: key);
+  const Product_card({super.key, required this.groceriesData});
 
   @override
-  _ProductCardState createState() => _ProductCardState();
+  State<Product_card> createState() => _Product_cardState();
 }
 
-class _ProductCardState extends State<ProductCard> {
-  late int _quantity;
+class _Product_cardState extends State<Product_card> {
+  int _quantity = 1;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  User? _user;
 
   @override
   void initState() {
     super.initState();
-    _quantity = widget.initialQuantity;
-    generateRandomNumber();
+    _user = _auth.currentUser;
   }
 
-  int randomValue = 0;
-  void generateRandomNumber() {
-    final random = Random();
-    int randomNumber;
+  Future<void> addToCart(int quantityChange) async {
+    try {
+      if (_user != null) {
+        final existingCartItem = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_user!.uid)
+            .collection('GroceriesCart')
+            .doc(widget.groceriesData['id'])
+            .get();
+        double totalItemPrice = widget.groceriesData['price'].toDouble();
 
-    do {
-      randomNumber = random.nextInt(26) + 5;
-    } while (randomNumber <= 0 || randomNumber > 30);
+        print(existingCartItem.exists);
+        if (existingCartItem.exists) {
+          final currentQuantity = existingCartItem.data()?['quantity'] ?? 0;
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(_user!.uid)
+              .collection('GroceriesCart')
+              .doc(widget.groceriesData['id'])
+              .update({
+            'quantity': currentQuantity + quantityChange,
+            'totalPrice': totalItemPrice * (currentQuantity + quantityChange),
+          });
+          if (mounted) {
+            setState(() {
+              _quantity = currentQuantity + quantityChange;
+            });
+          }
+          print('Quantity updated in cart successfully!');
+        } else {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(_user!.uid)
+              .collection('GroceriesCart')
+              .doc(widget.groceriesData['id'])
+              .set({
+            'itemid': widget.groceriesData['id'],
+            'itemimage': widget.groceriesData['image'],
+            'itemname': widget.groceriesData['title'],
+            'itemprice': widget.groceriesData['price'],
+            "weight": widget.groceriesData['weight'],
+            "offers": widget.groceriesData['offers'],
+            'quantity': quantityChange,
+            'timestamp': FieldValue.serverTimestamp(),
+            'totalPrice': totalItemPrice * quantityChange,
+            "discount": widget.groceriesData["offers"],
+          });
+          if (mounted) {
+            setState(() {
+              _quantity = quantityChange;
+            });
+          }
+          print('Item added to cart successfully!');
+        }
+      } else {
+        print('User is not authenticated. Cannot add to cart.');
+      }
+    } catch (e) {
+      print('Error adding item to cart: $e');
+    }
+  }
 
-    setState(() {
-      randomValue = randomNumber;
+  void removeFromCart() {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(_user!.uid)
+        .collection('GroceriesCart')
+        .doc(widget.groceriesData['id'])
+        .delete()
+        .then((value) {
+      print('Item removed from cart successfully');
+    }).catchError((error) {
+      print('Failed to remove item from cart: $error');
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final cartProvider = context.read<GroceriesCart>();
+  Widget build(BuildContext) {
+    final width = MediaQuery.of(context).size.width;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
-      child: Stack(
-        alignment: Alignment.topLeft,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-                border: Border.all(
-                  width: 0.5,
-                  color: Colors.grey.shade300,
-                ),
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey.shade300,
-                      spreadRadius: 2,
-                      blurRadius: 3,
-                      offset: Offset(0, 2))
-                ]),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 5),
-                Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(image: NetworkImage(widget.image)),
+      padding: const EdgeInsets.all(5.0),
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            // border: Border.all(width: 1, color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                  offset: Offset(1, 2),
+                  color: Colors.grey.shade200,
+                  spreadRadius: 2,
+                  blurRadius: 3)
+            ]),
+        child: Column(
+          children: [
+            Container(
+              // decoration:
+              // BoxDecoration(color: Colors.grey.shade200.withOpacity(0.5)),
+              width: width * 0.4,
+              height: width * 0.4,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: Stack(
+                alignment: AlignmentDirectional.topStart,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        image: DecorationImage(
+                          image: NetworkImage(
+                            widget.groceriesData['image'],
+                          ),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
-                    height: MediaQuery.of(context).size.height * 0.08,
-                    // width: 100,
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.title.split(' ').take(4).join(' '),
-                          style: GoogleFonts.archivo(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          )
-                          // TextStyle(
-                          //   fontWeight: FontWeight.bold,
-                          //   fontSize: 16,
-                          // ),
+                  widget.groceriesData['offers'] != null
+                      ? Positioned(
+                          right: 10,
+                          top: 0,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                "assets/Offers/offer_tag.png",
+                                scale: 2.8,
+                              ),
+                              Center(
+                                child: Text(
+                                  "${widget.groceriesData['offers']}%\noff",
+                                  style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                              0.030,
+                                      color: Colors.black,
+                                      fontFamily: "Quicksand",
+                                      fontWeight: FontWeight.w800),
+                                ),
+                              )
+                            ],
                           ),
-                      SizedBox(height: 5),
-                      Row(
-                        children: [
-                          Text(
-                            '₹${widget.price.toString()}0',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          if (widget.categoryName ==
-                              'Fresh Fruits & Vegetables')
-                            Text(
-                              ' for KG',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 14),
+                        )
+                      : Container(),
+                  Positioned(
+                    right: 10,
+                    bottom: 0,
+                    child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(_user!.uid)
+                          .collection('GroceriesCart')
+                          .doc(widget.groceriesData['id'])
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Shimmer.fromColors(
+                            period: const Duration(milliseconds: 1500),
+                            direction: ShimmerDirection.ltr,
+                            // int loop = 0,
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 40.0,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 5),
-                Row(
-                  children: [
-                    SizedBox(width: 10),
-                    InkWell(
-                      onTap: () {
-                        cartProvider.addToCart({
-                          'id': widget.id,
-                          'title': widget.title,
-                          'image': widget.image,
-                          'price': widget.price,
-                        }, _quantity);
+                          );
+                        } else {
+                          if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else {
+                            final existingCartItem = snapshot.data;
+                            final isItemInDB =
+                                existingCartItem?.exists ?? false;
+                            int quantity =
+                                isItemInDB ? existingCartItem!['quantity'] : 0;
 
-                        setState(() {
-                          _quantity = 1;
-                        });
-                        showCustomSnackBar(
-                            context, "${widget.title} Item added to Cart");
+                            return isItemInDB
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                              offset: Offset(1, 5),
+                                              spreadRadius: 2,
+                                              blurRadius: 5,
+                                              color: Colors.grey.shade200)
+                                        ],
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(25)),
+                                    width: MediaQuery.of(context).size.width *
+                                        0.25,
+                                    height: 30,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        SizedBox(height: 3),
+                                        InkWell(
+                                          onTap: () {
+                                            if (quantity > 1) {
+                                              addToCart(-1);
+                                            } else {
+                                              removeFromCart();
+                                            }
+                                            showCustomSnackBar(context,
+                                                "Item removed from cart");
+                                          },
+                                          child: Icon(Icons.remove),
+                                        ),
+                                        Text(
+                                          quantity.toString(),
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 18),
+                                        ),
+                                        InkWell(
+                                          child: const Icon(Icons.add),
+                                          onTap: () {
+                                            showCustomSnackBar(
+                                                context, "Item added to cart");
+                                            addToCart(1);
+                                          },
+                                        ),
+                                        SizedBox(height: 3),
+                                      ],
+                                    ),
+                                  )
+                                : InkWell(
+                                    onTap: () {
+                                      addToCart(1);
+                                    },
+                                    // onTap: _showItemDetails,
+                                    child: Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Container(
+                                        alignment: Alignment.center,
+                                        width: 35,
+                                        height: 35,
+                                        decoration: BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                  offset: Offset(1, 5),
+                                                  spreadRadius: 2,
+                                                  blurRadius: 5,
+                                                  color: Colors.grey.shade200)
+                                            ],
+                                            color: Colors.white,
+                                            shape: BoxShape.circle),
+                                        child: Icon(
+                                          Icons.add,
+                                          size: 26,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                          }
+                        }
                       },
-                      child: Container(
-                        width: 55,
-                        height: 25,
-                        decoration: BoxDecoration(
-                            color: Colors.indigo.shade300.withOpacity(0.3),
-                            border: Border.all(
-                                width: 1, color: Colors.indigo.shade300),
-                            borderRadius: BorderRadius.circular(5)),
-                        child: Center(
-                          child: Text(
-                            "Add",
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.indigo),
-                          ),
-                        ),
-                      ),
                     ),
-                    Expanded(child: SizedBox()),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove),
-                          onPressed: () {
-                            if (_quantity > 1) {
-                              setState(() {
-                                _quantity--;
-                              });
-                            }
-                          },
-                        ),
-                        Text('$_quantity'),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            setState(() {
-                              _quantity++;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          // Positioned(
-          //   bottom: 165,
-          //   right: 120,
-          //   child: Stack(
-          //     alignment: Alignment.center,
-          //     children: [
-          //       Image.asset(
-          //         "assets/utiles/price_tag_groceies.png",
-          //         width: 90,
-          //         height: 120,
-          //       ),
-          //       Positioned(
-          //         top: 45,
-          //         child: Text(
-          //           "${randomValue}%\nOFF",
-          //           style: TextStyle(
-          //               color: Colors.white,
-          //               fontWeight: FontWeight.bold,
-          //               fontSize: 10),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-        ],
+            Container(
+              width: width * 0.4,
+              height: width * 0.2,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5),
+                  Text(
+                    '${widget.groceriesData['title'].split(' ').take(4).join(' ')}',
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.043,
+                      color: Colors.black,
+                      fontFamily: "Quicksand",
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  widget.groceriesData['offers'] != null
+                      ? Text.rich(
+                          TextSpan(
+                            // text: 'This item costs ',
+                            children: <TextSpan>[
+                              new TextSpan(
+                                text: "₹${widget.groceriesData['price']}",
+                                style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.035,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: "Quicksand",
+                                    decoration: TextDecoration.lineThrough,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              new TextSpan(
+                                text:
+                                    "  ₹${widget.groceriesData['price'] - 10}/ ${widget.groceriesData['weight']}",
+                                style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.035,
+                                    color: Colors.grey.shade600,
+                                    fontFamily: "Quicksand",
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Text(
+                          "₹${widget.groceriesData['price']}/ ${widget.groceriesData['weight']}",
+                          style: TextStyle(
+                              fontSize:
+                                  MediaQuery.of(context).size.width * 0.035,
+                              color: Colors.grey.shade600,
+                              fontFamily: "Quicksand",
+                              fontWeight: FontWeight.w600),
+                        ),
+
+                  // Text(
+                  //   "⭐ ${widget.restaurantData['rating']} | $distance | $duration",
+                  //   style: TextStyle(
+                  //       fontSize: MediaQuery.of(context).size.width * 0.032,
+                  //       color: Colors.grey.shade600,
+                  //       fontFamily: "Quicksand",
+                  //       fontWeight: FontWeight.w600),
+                  // )
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

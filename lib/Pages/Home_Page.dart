@@ -4,6 +4,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:uber_eats/Add_address/add_address.dart';
+import 'package:uber_eats/Features_Layouts/search_bar.dart';
 import 'package:uber_eats/Screens/RestaurantDetailsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
@@ -85,7 +86,7 @@ class _RestaurantListState extends State<RestaurantList> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +187,7 @@ class _RestaurantListState extends State<RestaurantList> {
                               Navigator.of(context).pushReplacement(
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          MyHomePage(selectindex: 1)));
+                                          Dash_board(selectindex: 1)));
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 5),
@@ -253,7 +254,7 @@ class _RestaurantListState extends State<RestaurantList> {
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      MyHomePage(selectindex: 2),
+                                      Dash_board(selectindex: 2),
                                 ),
                               );
                             },
@@ -321,7 +322,7 @@ class _RestaurantListState extends State<RestaurantList> {
                               Navigator.of(context).pushReplacement(
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          MyHomePage(selectindex: 0)));
+                                          Dash_board(selectindex: 0)));
                             },
                             child: Padding(
                               padding:
@@ -331,22 +332,6 @@ class _RestaurantListState extends State<RestaurantList> {
                                 height: 120,
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade200.withOpacity(0.4),
-                                  // gradient: LinearGradient(
-                                  //   begin: Alignment.topLeft,
-                                  //   end: Alignment.bottomRight,
-                                  //   colors: [
-                                  //     Colors.black38,
-                                  //     Colors.,
-                                  //     Colors.white,
-                                  //   ],
-                                  // ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 2,
-                                        spreadRadius: 2,
-                                        offset: Offset(1, 3),
-                                        color: Colors.grey.shade100)
-                                  ],
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
@@ -547,22 +532,13 @@ class _RestaurantListState extends State<RestaurantList> {
                               return GestureDetector(
                                 onTap: () {
                                   if (restaurantData.containsKey('id')) {
-                                    // Navigator.push(
-                                    //   context,
-                                    //   MaterialPageRoute(
-                                    //     builder: (context) =>
-                                    //         RestaurantDetailsPage(
-                                    //       restaurantId: restaurantId,
-                                    //     ),
-                                    //   ),
-                                    // );
                                   } else {
                                     print(
                                         'Restaurant ID is missing in restaurantData');
                                   }
                                 },
                                 child: Deals_Card(
-                                  restaurantData: restaurantData,
+                                  groceriesData: restaurantData,
                                 ),
                               );
                             },
@@ -620,11 +596,7 @@ class _RestaurantCardState extends State<RestaurantCard> {
         final isFavorite = await favoriteRef.get();
 
         if (isFavorite.exists) {
-          // Remove from favorites if already exists
           await favoriteRef.delete();
-          // setState(() {
-          //   this.isFavorite = false;
-          // });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Removed from favorites'),
             duration: Duration(seconds: 1),
@@ -632,14 +604,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
             behavior: SnackBarBehavior.floating,
           ));
         } else {
-          // Add to favorites if not exists
           await favoriteRef.set({
             'restaurantId': restaurantId,
             'timestamp': FieldValue.serverTimestamp(),
           });
-          // setState(() {
-          //   this.isFavorite = true;
-          // });
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Added to favorites'),
             duration: Duration(seconds: 1),
@@ -882,9 +850,9 @@ class _RestaurantCardState extends State<RestaurantCard> {
 }
 
 class Deals_Card extends StatefulWidget {
-  final Map<String, dynamic> restaurantData;
+  final Map<String, dynamic> groceriesData;
 
-  const Deals_Card({super.key, required this.restaurantData});
+  const Deals_Card({super.key, required this.groceriesData});
 
   @override
   State<Deals_Card> createState() => _Deals_CardState();
@@ -910,9 +878,9 @@ class _Deals_CardState extends State<Deals_Card> {
             .collection('users')
             .doc(_user!.uid)
             .collection('GroceriesCart')
-            .doc(widget.restaurantData['id'])
+            .doc(widget.groceriesData['id'])
             .get();
-        double totalItemPrice = widget.restaurantData['price'];
+        double totalItemPrice = widget.groceriesData['price'];
         print(existingCartItem.exists);
         if (existingCartItem.exists) {
           final currentQuantity = existingCartItem.data()?['quantity'] ?? 0;
@@ -920,9 +888,8 @@ class _Deals_CardState extends State<Deals_Card> {
               .collection('users')
               .doc(_user!.uid)
               .collection('GroceriesCart')
-              .doc(widget.restaurantData['id'])
+              .doc(widget.groceriesData['id'])
               .update({
-            "ljca": "adjcb",
             'quantity': currentQuantity + quantityChange,
             'totalPrice': totalItemPrice * (currentQuantity + quantityChange),
           });
@@ -938,19 +905,18 @@ class _Deals_CardState extends State<Deals_Card> {
               .collection('users')
               .doc(_user!.uid)
               .collection('GroceriesCart')
-              .doc(widget.restaurantData['id'])
+              .doc(widget.groceriesData['id'])
               .set({
-            'id': widget.restaurantData['id'],
-            'imageUrl': widget.restaurantData['imageUrl'],
-            'name': widget.restaurantData['name'],
-            'price': widget.restaurantData['price'],
-            "weight": widget.restaurantData['weight'],
-            "offers": widget.restaurantData['offers'],
-            'quantity': quantityChange, // Set quantity to quantityChange
+            'itemid': widget.groceriesData['id'],
+            'itemimage': widget.groceriesData['imageUrl'],
+            'itemname': widget.groceriesData['name'],
+            'itemprice': widget.groceriesData['price'],
+            "weight": widget.groceriesData['weight'],
+            "offers": widget.groceriesData['offers'],
+            'quantity': quantityChange,
             'timestamp': FieldValue.serverTimestamp(),
             'totalPrice': totalItemPrice * quantityChange,
-            "discount": widget.restaurantData["offers"],
-            "cdsc": "oepn"
+            "discount": widget.groceriesData["offers"],
           });
           if (mounted) {
             setState(() {
@@ -972,7 +938,7 @@ class _Deals_CardState extends State<Deals_Card> {
         .collection('users')
         .doc(_user!.uid)
         .collection('GroceriesCart')
-        .doc(widget.restaurantData['id'])
+        .doc(widget.groceriesData['id'])
         .delete()
         .then((value) {
       print('Item removed from cart successfully');
@@ -1015,7 +981,7 @@ class _Deals_CardState extends State<Deals_Card> {
                         borderRadius: BorderRadius.circular(15),
                         image: DecorationImage(
                           image: NetworkImage(
-                            widget.restaurantData['imageUrl'],
+                            widget.groceriesData['imageUrl'],
                           ),
                           fit: BoxFit.fitHeight,
                         ),
@@ -1034,7 +1000,7 @@ class _Deals_CardState extends State<Deals_Card> {
                         ),
                         Center(
                           child: Text(
-                            "${widget.restaurantData['offers']}%\noff",
+                            "${widget.groceriesData['offers']}%\noff",
                             style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.035,
@@ -1054,7 +1020,7 @@ class _Deals_CardState extends State<Deals_Card> {
                           .collection('users')
                           .doc(_user!.uid)
                           .collection('GroceriesCart')
-                          .doc(widget.restaurantData['id'])
+                          .doc(widget.groceriesData['id'])
                           .snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -1166,7 +1132,7 @@ class _Deals_CardState extends State<Deals_Card> {
                 children: [
                   SizedBox(height: 5),
                   Text(
-                    widget.restaurantData['name'],
+                    widget.groceriesData['name'],
                     style: TextStyle(
                         fontSize: MediaQuery.of(context).size.width * 0.040,
                         color: Colors.black,
@@ -1174,7 +1140,7 @@ class _Deals_CardState extends State<Deals_Card> {
                         fontWeight: FontWeight.w900),
                   ),
                   Text(
-                    "₹${widget.restaurantData['price']}/ ${widget.restaurantData['weight']}",
+                    "₹${widget.groceriesData['price']}/ ${widget.groceriesData['weight']}",
                     style: TextStyle(
                         fontSize: MediaQuery.of(context).size.width * 0.032,
                         color: Colors.grey.shade600,
@@ -1214,7 +1180,7 @@ class _SearchBarState extends State<SearchBar> {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => groceries_search_screen(),
+              builder: (context) => RestaurantSearchScreen(),
             ));
       },
       child: Container(
@@ -1319,4 +1285,3 @@ class _SearchBarState extends State<SearchBar> {
     );
   }
 }
-

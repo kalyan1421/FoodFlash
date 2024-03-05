@@ -1,6 +1,11 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:card_swiper/card_swiper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uber_eats/Utils/utils.dart';
+import 'package:ionicons/ionicons.dart';
+import 'package:uber_eats/Add_address/add_address.dart';
 import 'package:uber_eats/groceries/groceries_items_screen.dart';
 import 'package:uber_eats/groceries/groceries_search_screen.dart';
 
@@ -23,7 +28,52 @@ class _CategoryScreenState extends State<CategoryScreen> {
     'CleaningEssentails': "Cleaning Essentails",
     'BathBodyHai': "Bath, Body and Hair"
   };
+
   List<String> filteredCategories = [];
+
+  String? formattedAddress;
+  User? user = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRecentAddressData();
+  }
+
+  void fetchRecentAddressData() async {
+    String userId = user!.uid;
+
+    try {
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('addresses')
+              .orderBy('createdAt', descending: true)
+              .limit(1)
+              .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentSnapshot<Map<String, dynamic>> docSnapshot =
+            querySnapshot.docs.first;
+        Map<String, dynamic> data = docSnapshot.data()!;
+        // print('Data from document: $data');
+        if (data.containsKey('formattedAddress')) {
+          String fullAddress = data['formattedAddress'];
+          String truncatedAddress = fullAddress.substring(0, 20);
+          setState(() {
+            formattedAddress = truncatedAddress;
+          });
+        } else {
+          print('formattedAddress field not found in document');
+        }
+      } else {
+        print('No documents found in the addresses subcollection');
+      }
+    } catch (e) {
+      print('Error fetching recent address data: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +87,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
             SliverAppBar(
               automaticallyImplyLeading: false,
               backgroundColor: Colors.white,
-              collapsedHeight: 180,
-              expandedHeight: 190,
+              collapsedHeight: 200,
+              expandedHeight: 220,
               floating: true,
               pinned: true,
               flexibleSpace: Container(
@@ -55,51 +105,210 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     end: Alignment.bottomCenter,
                   ),
                 ),
-                height: 210,
+                height: 220,
                 child: Column(
                   children: [
                     // const Expanded(child: SizedBox()),
-                    const SizedBox(height: 25),
-                    location_insta(),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 45),
+                    // location_insta(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder:
+                                      (context, animation, secondaryAnimation) {
+                                    return AnimatedBuilder(
+                                      animation: animation,
+                                      builder: (context, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(0, 1),
+                                            end: Offset.zero,
+                                          ).animate(animation),
+                                          child: child,
+                                        );
+                                      },
+                                      child: AddAddressScreen(),
+                                    );
+                                  },
+                                  transitionDuration:
+                                      Duration(milliseconds: 500),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Delivery Now",
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                      fontFamily: "Quicksand",
+                                      fontWeight: FontWeight.w800),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "${formattedAddress}",
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.black,
+                                          fontFamily: "Quicksand",
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {},
+                                      child: Icon(
+                                        Icons.keyboard_arrow_down_sharp,
+                                        size: 30,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: CircleAvatar(
+                              backgroundColor:
+                                  Colors.grey.shade200.withOpacity(0.8),
+                              child: Icon(Ionicons.person_outline,
+                                  color: Colors.black, size: 25),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     InkWell(
                       onTap: () {
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const groceries_search_screen(),
-                          ),
-                        );
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => groceries_search_screen(),
+                            ));
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          height: 50,
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      width: 1.5, color: Colors.grey),
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8)),
-                              child: Row(
-                                children: [
-                                  SizedBox(width: 10),
-                                  Text(
-                                    "Search by categories",
-                                    style: TextStyle(
-                                        fontSize: 18, color: Colors.indigo),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.95,
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            // BoxShadow(
+                            //   color: Colors.grey.withOpacity(0.5),
+                            //   spreadRadius: 2,
+                            //   blurRadius: 2,
+                            //   offset: const Offset(0, 3),
+                            // ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                const Icon(Ionicons.search_outline,
+                                    color: Colors.black, size: 30),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              groceries_search_screen(),
+                                        ));
+                                  },
+                                  child: SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.5,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Search",
+                                          style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400),
+                                        ),
+                                        AnimatedTextKit(
+                                          animatedTexts: [
+                                            RotateAnimatedText(
+                                              ' Fruits',
+                                              duration:
+                                                  const Duration(seconds: 1),
+                                              textStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                            RotateAnimatedText(
+                                              ' Dry Fruits',
+                                              duration:
+                                                  const Duration(seconds: 1),
+                                              textStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                            RotateAnimatedText(
+                                              ' Tea',
+                                              duration:
+                                                  const Duration(seconds: 1),
+                                              textStyle: const TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                          ],
+                                          isRepeatingAnimation: true,
+                                          repeatForever: true,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  Expanded(child: SizedBox()),
-                                  Icon(
-                                    Icons.search,
-                                    color: Colors.indigo.shade300,
-                                    size: 30,
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.grey.shade300.withOpacity(.8),
+                                ),
+                                IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.mic,
+                                    color: Colors.black,
+                                    size: 28,
                                   ),
-                                  SizedBox(width: 10),
-                                ],
-                              )),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -197,7 +406,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       width: MediaQuery.of(context).size.width * 0.95,
                       height: 200,
                       decoration: BoxDecoration(
-                        // color: Colors.amber,
+                        borderRadius: BorderRadius.circular(20),
                         image: DecorationImage(
                             image: AssetImage(
                               "assets/Groceries_bannner_images/1.jpg",

@@ -10,7 +10,8 @@ import 'package:uber_eats/Pages/Cart_page.dart';
 import 'package:uber_eats/Provider/user_provider.dart';
 import 'package:uber_eats/Tracking/order_traking.dart';
 import 'package:uber_eats/model/cart.dart';
-import 'package:upi_india/upi_india.dart';import 'package:http/http.dart' as http;
+import 'package:upi_india/upi_india.dart';
+import 'package:http/http.dart' as http;
 
 class upi_payment extends StatefulWidget {
   final double totalPrice;
@@ -123,8 +124,8 @@ class _upi_paymentState extends State<upi_payment> {
   }
 
   void _handleTransactionStatus(String status, UpiResponse upiResponse) {
-    if (status == 'success') {
-      // if (status == 'failure') {
+    // if (status == 'success') {
+    if (status == 'failure') {
       saveOrderDetails(upiResponse).then((_) {
         Future.delayed(const Duration(seconds: 1), () {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -163,6 +164,9 @@ class _upi_paymentState extends State<upi_payment> {
       });
     }
   }
+  String generateOrderId() {
+  return 'order_${DateTime.now().millisecondsSinceEpoch}';
+}
 
   Future<void> saveOrderDetails(UpiResponse upiResponse) async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -172,25 +176,35 @@ class _upi_paymentState extends State<upi_payment> {
     try {
       final userId = userProvider.getUser?.uid;
 
-      if (userId != null) {
+      if (userId != null) {final String orderId = generateOrderId(); 
         final orderRef = firestore
             .collection('users')
             .doc(userId)
             .collection('orders')
-            .doc();
+            .doc(orderId);
 
         final orderData = {
+          'orderId': orderId,
           'timestamp': FieldValue.serverTimestamp(),
           'transactionId': upiResponse.transactionId,
           'responseCode': upiResponse.responseCode,
           'approvalRefNo': upiResponse.approvalRefNo,
           'totalAmount': widget.totalPrice,
+          'DeliveryFree' : 20, 
+          "paymethod": 'UPI',
+          "Tax&fee": 14,
           "discount": widget.discountprice,
           'items': widget.cartItems.map((item) {
             return {
               'item name': item.name,
               'quantity': item.quantity,
               'price': item.price,
+              'image': item.imageUrl,
+              'itemId': item.itemId,
+              'restaurantname': item.Restauranname,
+              'restaurantloaction': item.restaurantloaction,
+              'restaurantlatitude': item.restaurantlatitude,
+              'restaurantlongtude': item.restaurantlongtude
             };
           }).toList(),
         };
@@ -261,8 +275,6 @@ class _upi_paymentState extends State<upi_payment> {
   }
 }
 
-
-
 class My_1HomePage extends StatefulWidget {
   const My_1HomePage({Key? key}) : super(key: key);
 
@@ -315,30 +327,30 @@ class _My_1HomePageState extends State<My_1HomePage> {
 
 // create order
   void createOrder() async {
-  // Replace 'YOUR_RAZORPAY_API_KEY' with your actual Razorpay API key
-  String apiKey = "rzp_test_AN43m0hPD1YZ6i";
-  
-  Map<String, dynamic> body = {
-    "amount": 100,
-    "currency": "INR",
-    "receipt": "rcptid_11"
-  };
-  
-  var res = await http.post(
-    Uri.https("api.razorpay.com", "v1/orders"),
-    headers: <String, String>{
-      "Content-Type": "application/json",
-      "Authorization": "Bearer $apiKey", // Include the API key in the Authorization header
-    },
-    body: jsonEncode(body),
-  );
+    // Replace 'YOUR_RAZORPAY_API_KEY' with your actual Razorpay API key
+    String apiKey = "rzp_test_AN43m0hPD1YZ6i";
 
-  if (res.statusCode == 200) {
-    openGateway(jsonDecode(res.body)['id']);
+    Map<String, dynamic> body = {
+      "amount": 100,
+      "currency": "INR",
+      "receipt": "rcptid_11"
+    };
+
+    var res = await http.post(
+      Uri.https("api.razorpay.com", "v1/orders"),
+      headers: <String, String>{
+        "Content-Type": "application/json",
+        "Authorization":
+            "Bearer $apiKey", // Include the API key in the Authorization header
+      },
+      body: jsonEncode(body),
+    );
+
+    if (res.statusCode == 200) {
+      openGateway(jsonDecode(res.body)['id']);
+    }
+    print(res.body);
   }
-  print(res.body);
-}
-
 
   openGateway(String orderId) {
     var options = {

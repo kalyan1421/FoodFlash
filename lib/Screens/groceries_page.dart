@@ -443,12 +443,11 @@ class groceries extends StatelessWidget {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const CategoryScreen()));
+                          builder: (context) => const CategoryScreen(),),);
                 },
                 child: const Text("Groceries")),
             ElevatedButton(
               onPressed: () {
-                // Save data for each category
                 saveDataToFirestore(fruitsAndVegetables, 'fruitsAndVegetables');
                 saveDataToFirestore(cookingAndOils, 'cookingAndOils');
                 saveDataToFirestore(meatAndFish, 'meatAndFish');

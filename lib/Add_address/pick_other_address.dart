@@ -90,7 +90,8 @@ class _Other_PickLocationState extends State<Other_PickLocation> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 0)));
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => Dash_board(selectindex: 0)));
       }
 
       setState(() {

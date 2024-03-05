@@ -20,7 +20,6 @@ import 'dash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-
 // Future<void> main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
 
@@ -384,7 +383,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 //   );
 // }
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -427,58 +425,59 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-Widget _buildHomeScreen() {
-  switch (_connectionStatus) {
-    case ConnectivityResult.none:
-      return Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(
-                  height: 300,
-                ),
-                Center(
-                  child: Lottie.asset("assets/utiles/Internet_loading.json", repeat: true),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                const Center(
-                  child: Text(
-                    'You are offline. Please check your internet connection.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20),
+  Widget _buildHomeScreen() {
+    switch (_connectionStatus) {
+      case ConnectivityResult.none:
+        return Scaffold(
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 300,
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    case ConnectivityResult.mobile:
-    case ConnectivityResult.wifi:
-        return SplashScreen();
-    default:
-      return Scaffold(
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Lottie.asset("assets/utiles/Internet_loading.json", repeat: true),
-            const Center(
-              child: Text(
-                'Failed to determine connectivity status.',
-                textAlign: TextAlign.center,
+                  Center(
+                    child: Lottie.asset("assets/utiles/Internet_loading.json",
+                        repeat: true),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Center(
+                    child: Text(
+                      'You are offline. Please check your internet connection.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        );
+      case ConnectivityResult.mobile:
+      case ConnectivityResult.wifi:
+        return SplashScreen();
+      default:
+        return Scaffold(
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset("assets/utiles/Internet_loading.json", repeat: true),
+              const Center(
+                child: Text(
+                  'Failed to determine connectivity status.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        );
+    }
   }
 }
 
-}
 class ConnectivityWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -556,14 +555,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _handleNonFirstInstall() async {
     if (FirebaseAuth.instance.currentUser != null) {
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => MyHomePage(selectindex: 0,)));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => Dash_board(
+                selectindex: 0,
+              )));
     }
 
     // if (FirebaseAuth.instance.currentUser == null) {
     //   Navigator.of(context)
     //       .pushReplacement(MaterialPageRoute(builder: (_) => login_page()));
-    // } 
+    // }
     else {
       if (await Permission.location.isGranted ||
           await Permission.location.isDenied) {
@@ -595,7 +596,7 @@ class _SplashScreenState extends State<SplashScreen>
                 FadeTransition(
                   opacity: _animationController,
                   child: Text(
-                    "Food",
+                    "Foodie",
                     style: GoogleFonts.carterOne(
                       fontSize: 50,
                       color: Colors.indigo,

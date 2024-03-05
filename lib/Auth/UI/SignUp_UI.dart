@@ -207,7 +207,10 @@ class _SignUp_UIState extends State<SignUp_UI> {
                         // signUpUser();
                         bool success = await signUpUser();
                         if (success) {
-                          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 0)));
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      Dash_board(selectindex: 0)));
                         } else {
                           showCustomSnackBar(context,
                               "Kindly validate the accuracy of the entered information.");

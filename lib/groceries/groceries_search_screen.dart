@@ -48,7 +48,10 @@ class _groceries_search_screenState extends State<groceries_search_screen> {
                     children: [
                       IconButton(
                         onPressed: () {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MyHomePage(selectindex: 0)));
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      Dash_board(selectindex: 0)));
                         },
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
