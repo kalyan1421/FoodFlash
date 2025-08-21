@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
+// import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart'; // Temporarily disabled
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:uber_eats/dash_screen.dart';
@@ -20,7 +20,7 @@ class PickLocation extends StatefulWidget {
 }
 
 class _PickLocationState extends State<PickLocation> {
-  PickResult? selectedPlace;
+  String? selectedPlace; // Simplified version for temporary fix
   String placeId = '';
   bool _mapsInitialized = false;
 
@@ -79,9 +79,9 @@ class _PickLocationState extends State<PickLocation> {
             .collection('addresses')
             .add({
           'addressType': addressType,
-          'latitude': selectedPlace!.geometry!.location.lat,
-          'longitude': selectedPlace!.geometry!.location.lng,
-          'formattedAddress': selectedPlace!.formattedAddress,
+          'latitude': 0.0, // Placeholder - place picker disabled
+          'longitude': 0.0, // Placeholder - place picker disabled
+          'formattedAddress': cityController.text,
           'houseNumber': houseNumberController.text,
           'floorNumber': FloornumberController.text,
           'apartmentName': apartmentNameController.text,
@@ -115,36 +115,28 @@ class _PickLocationState extends State<PickLocation> {
     return Scaffold(
       body: Stack(
         children: [
-          PlacePicker(
-            apiKey: "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns",
-            hintText: "Find a place ...",
-            searchingText: "Please wait ...",
-            selectText: "Select place",
-            outsideOfPickAreaText: "Place not in area",
-            initialPosition: PickLocation.kInitialPosition,
-            useCurrentLocation: true,
-            selectInitialPosition: true,
-            usePinPointingSearch: true,
-            usePlaceDetailSearch: true,
-            zoomGesturesEnabled: true,
-            zoomControlsEnabled: true,
-            ignoreLocationPermissionErrors: true,
-            onMapCreated: (GoogleMapController controller) {
-              print("Map created");
-            },
-            onPlacePicked: (PickResult result) {
-              print("Place picked: ${result.formattedAddress}");
-              setState(() {
-                selectedPlace = result;
-                cityController.text = result.formattedAddress ?? "";
-              });
-            },
-            onMapTypeChanged: (MapType mapType) {
-              print("Map type changed to ${mapType.toString()}");
-            },
-            forceSearchOnZoomChanged: true,
+          // PlacePicker temporarily disabled - using basic map instead
+          Container(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.location_on, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Place Picker temporarily disabled',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Please enter address manually below',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
           ),
-          if (selectedPlace != null)
+          // if (selectedPlace != null) // Temporarily disabled
             DraggableScrollableSheet(
               initialChildSize: 0.3,
               minChildSize: 0.1,

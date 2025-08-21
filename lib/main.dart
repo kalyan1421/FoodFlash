@@ -410,9 +410,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
       setState(() {
-        _connectionStatus = result;
+        _connectionStatus = results.isNotEmpty ? results.first : ConnectivityResult.none;
       });
     });
   }
@@ -481,11 +481,11 @@ class _MyAppState extends State<MyApp> {
 class ConnectivityWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<ConnectivityResult>(
+    return StreamBuilder<List<ConnectivityResult>>(
       stream: Connectivity().onConnectivityChanged,
-      initialData: ConnectivityResult.none,
+      initialData: [ConnectivityResult.none],
       builder: (context, snapshot) {
-        final connectivityResult = snapshot.data;
+        final connectivityResult = snapshot.data?.isNotEmpty == true ? snapshot.data!.first : ConnectivityResult.none;
         if (connectivityResult == ConnectivityResult.none) {
           return NoInternetPage();
         } else {

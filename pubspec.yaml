@@ -18,50 +18,52 @@ environment:
 dependencies:
   animated_text_kit: ^4.2.2
   app_settings: ^5.1.1
-  awesome_snackbar_content: ^0.1.3
+  awesome_snackbar_content: ^0.1.1
   card_swiper: ^3.0.1
   change_app_package_name: ^1.1.0
-  cloud_firestore: ^4.10.0
-  connectivity_plus: ^5.0.2
-  country_picker: ^2.0.24
+  cloud_firestore: ^4.17.0
+  connectivity_plus: ^6.0.3
+  country_picker: ^2.0.26
   cupertino_onboarding: ^1.2.0
-  firebase_auth: ^4.11.0
-  firebase_storage: ^11.3.0
+  firebase_auth: ^4.19.0
+  firebase_storage: ^11.7.0
   flutter:
     sdk: flutter
   flutter_advanced_switch: ^3.0.1
   flutter_animator: ^3.2.2
-  flutter_config: ^2.0.2
+  # flutter_config: ^2.0.2  # Temporarily disabled due to namespace issues
   flutter_map: ^6.1.0
-  flutter_material_pickers: ^3.6.0
+  flutter_material_pickers: ^3.7.0
   flutter_polyline_points: ^2.0.0
   flutter_rating_bar: ^4.0.1
   geocoding: ^2.1.1
-  geolocator: ^10.0.1
-  google_fonts: ^4.0.4
-  google_maps_flutter: ^2.5.0
-  google_maps_place_picker_mb: ^3.1.2
+  geolocator: ^10.1.1
+  google_fonts: ^6.2.1
+  google_maps_flutter: ^2.6.1
+  # google_maps_place_picker_mb: ^3.1.2  # Temporarily disabled due to build issues
   google_nav_bar: ^5.0.6
   google_sign_in: ^6.2.1
-  image_picker: ^1.0.4
-  intl: ^0.18.1
+  image_picker: ^1.0.8
+  intl: ^0.19.0
   ionicons: ^0.2.2
   latlong2: ^0.9.0
-  location: ^5.0.3
-  lottie: ^3.0.0
+  location: ^6.0.2
+  lottie: ^3.1.2
   mockito: ^5.4.4
-  permission_handler: ^11.0.1
+  permission_handler: ^11.3.1
   pinput: ^3.0.1
-  provider: ^6.0.5
-  razorpay_flutter: ^1.3.6
+  provider: ^6.1.2
+  # razorpay_flutter: ^1.3.6  # Removed - using only Cash on Delivery
   rename_app: ^1.3.1
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.2.3
   shimmer: ^3.0.0
   sign_button: ^2.0.6
-  upi_india: ^3.0.1
-  url_launcher: ^6.1.14
-  uuid: ^4.1.0
-
+  # upi_india: ^3.0.1  # Temporarily disabled due to namespace issues
+  url_launcher: ^6.2.6
+  uuid: ^4.4.0
+  file_picker: ^8.0.3
+  flutter_native_splash: ^2.4.1
+  
 dev_dependencies:
   cupertino_icons: ^1.0.2
   flutter_launcher_icons: "^0.13.1"
@@ -76,7 +78,7 @@ flutter_launcher_icons:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

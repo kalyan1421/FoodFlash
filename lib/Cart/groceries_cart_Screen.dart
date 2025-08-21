@@ -946,10 +946,29 @@ class _GroceriesCartScreenState extends State<GroceriesCartScreen> {
                     SizedBox(height: 20),
                     InkWell(
                       onTap: () {
+                        // Convert GroceriesCartItem to CartSavedItem
+                        List<CartSavedItem> convertedItems = cartItems.map((item) => CartSavedItem(
+                          itemId: item.itemId,
+                          name: item.name,
+                          price: item.price,
+                          quantity: item.quantity,
+                          imageUrl: item.imageUrl,
+                          vegnoo: '',  // Not available in GroceriesCartItem
+                          addonprice: 0.0,  // Not available in GroceriesCartItem
+                          weight: item.weight,
+                          Restauranname: 'Grocery Store',  // Default for groceries
+                          restaurantloaction: '',  // Not available
+                          restaurantlatitude: '',  // Not available
+                          restaurantlongtude: '',  // Not available
+                        )).toList();
+                        
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: ((context) => My_1HomePage())));
+                                builder: ((context) => upi_payment(
+                                    totalPrice: _FoodcalculateofferTotalPrice(cartItems),
+                                    discountprice: 0,
+                                    cartItems: convertedItems))));
                         //     upi_payment(
                         //         totalPrice:
                         //             _FoodcalculateofferTotalPrice(cartItems),

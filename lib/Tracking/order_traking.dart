@@ -144,9 +144,12 @@ class _OrderTrackingState extends State<Order_tracking> {
 
     try {
       final result = await polylinePoints.getRouteBetweenCoordinates(
-        "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns",
-        startPoint,
-        finishPoint,
+        googleApiKey: "AIzaSyBHgv6qWJ_ADWU9jTNcKa5vMpThbfAlgns",
+        request: PolylineRequest(
+          origin: startPoint,
+          destination: finishPoint,
+          mode: TravelMode.driving,
+        ),
       );
 
       if (result.points.isNotEmpty) {
@@ -970,9 +973,12 @@ class _WidgetGoogleMapState extends State<WidgetGoogleMap> {
 
     try {
       final result = await polylinePoints.getRouteBetweenCoordinates(
-        APIKEY,
-        startPoint,
-        finishPoint,
+        googleApiKey: APIKEY,
+        request: PolylineRequest(
+          origin: startPoint,
+          destination: finishPoint,
+          mode: TravelMode.driving,
+        ),
       );
 
       if (result.points.isNotEmpty) {
