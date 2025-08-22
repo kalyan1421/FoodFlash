@@ -9,12 +9,12 @@
       "client_info": {
         "mobilesdk_app_id": "1:700654521573:android:07f9d9f9e8027923f8980c",
         "android_client_info": {
-          "package_name": "com.Synergy.Foodieflash"
+          "package_name": "com.kalyan.Foodieflash"
         }
       },
       "oauth_client": [
         {
-          "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+          "client_id": "700654521573-sosopdl0bvjkr3s30iib5bh0vdft8ntp.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -29,6 +29,13 @@
             {
               "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "700654521573-l6ems5mv9a641rc61hm56fuv9k54sgvs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.grocergo"
+              }
             }
           ]
         }
@@ -36,14 +43,14 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:700654521573:android:d454e601bc328c5ef8980c",
+        "mobilesdk_app_id": "1:700654521573:android:f97c72254365e650f8980c",
         "android_client_info": {
-          "package_name": "com.Synergy.ubereats"
+          "package_name": "com.example.grocergo"
         }
       },
       "oauth_client": [
         {
-          "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
+          "client_id": "700654521573-sosopdl0bvjkr3s30iib5bh0vdft8ntp.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -58,6 +65,13 @@
             {
               "client_id": "700654521573-h2gj32ahibmvr4sicltlj0l6858r9g9d.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "700654521573-l6ems5mv9a641rc61hm56fuv9k54sgvs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.grocergo"
+              }
             }
           ]
         }
