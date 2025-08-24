@@ -815,6 +815,7 @@ class _RestaurantCardState extends State<RestaurantCard> {
           margin: const EdgeInsets.symmetric(horizontal: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(height: 5),
               Text(

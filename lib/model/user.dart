@@ -12,8 +12,8 @@ class User {
   static User fromSnap(DocumentSnapshot snap) {
     var snapshot = snap.data() as Map<String, dynamic>;
     return User(
-        email: snapshot['email'],
-        uid: snapshot['uid'],
-        username: snapshot['username'],);
+        email: snapshot['email'] ?? '',
+        uid: snapshot['uid'] ?? '',
+        username: snapshot['username'] ?? 'Unknown User',);
   }
 }
